@@ -1,0 +1,1667 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, user-scalable=yes">
+  <title>単語帳作成</title>
+  <link rel="apple-touch-icon" sizes="512x512" href="./images/icon.png">
+  <link rel="icon" type="image/x-icon" href="./images/favicon.ico">
+  <link rel="stylesheet" type="text/css" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <script src="theme.js"></script>
+
+  <style>
+    body {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .card {
+      background: var(--color-surface);
+      color: var(--color-text);
+      padding: 25px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+    }
+
+    input {
+      padding: 12px;
+      border-radius: 10px;
+      border: 1px solid var(--color-border);
+      font-size: 16px;
+    }
+
+    #title{
+      width: 80%;
+      max-width: 400px;
+    }
+    #front,
+    #back {
+      width: 80%;
+      max-width: 400px;
+      padding: 12px;
+      border-radius: 10px;
+      border: 1px solid var(--color-border);
+      font-size: 16px;
+      font-family: inherit;
+      line-height: 1.4;
+      /* box-sizing:border-boxが無いと、autoResizeTextareaで設定した高さに
+         padding分がさらに上乗せされてしまい、入力するたびに高さが
+         増え続けてしまう不具合の原因になっていた */
+      box-sizing: border-box;
+      resize: none;
+      overflow: hidden;
+      display: block;
+    }
+    
+    .row {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 5px;
+      margin-top: 15px;
+    }
+
+    .publicStatus {
+      font-size: 12px;
+      color: var(--color-text-sub);
+    }
+
+    .dragHandle {
+      width: 22px;
+      height: 22px;
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      gap: 3px;
+      cursor: grab;
+      touch-action: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .dragHandle span {
+      display: block;
+      width: 16px;
+      height: 2px;
+      border-radius: 1px;
+      background: var(--color-text-sub);
+    }
+
+    .dragHandle:active {
+      cursor: grabbing;
+    }
+
+    .wordRow {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .wordRow textarea {
+      width: 200px;
+    }
+
+    .list {
+      margin-top: 20px;
+      text-align: left;
+      overflow-x: auto;
+    }
+
+    .wordItemCols {
+      display: grid;
+      grid-template-columns: 24px 26px minmax(80px, 1fr) 32px minmax(80px, 1fr) 92px 22px;
+      align-items: center;
+      column-gap: 8px;
+      min-width: 526px;
+    }
+
+    .wordItemCols .smallBtn {
+      width: 100%;
+      box-sizing: border-box;
+      text-align: center;
+    }
+
+    .wordNumber {
+      font-size: 12px;
+      color: var(--color-text-sub);
+      text-align: center;
+    }
+
+    .fieldWrap {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      min-width: 0;
+    }
+
+    .fieldWrap .editInput {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .fieldToggleBtn {
+      flex-shrink: 0;
+      background: var(--color-border);
+      color: var(--color-text);
+      border: none;
+      border-radius: 6px;
+      padding: 6px 6px;
+      font-size: 11px;
+      white-space: nowrap;
+      cursor: pointer;
+    }
+
+    .fieldToggleBtn.hasValue {
+      background: var(--color-accent);
+      color: var(--color-accent-text);
+    }
+
+    .wordExtraFields {
+      display: grid;
+      grid-template-columns: 24px 26px minmax(80px, 1fr) 32px minmax(80px, 1fr) 92px 22px;
+      column-gap: 8px;
+      min-width: 526px;
+    }
+
+    .extraFieldRow {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 6px;
+    }
+
+    .extraFieldRow.hintFieldRow {
+      grid-column: 3;
+    }
+
+    .extraFieldRow.noteFieldRow {
+      grid-column: 5;
+    }
+
+    .extraFieldLabel {
+      font-size: 11px;
+      color: var(--color-text-sub);
+      flex-shrink: 0;
+    }
+
+    .extraFieldRow textarea {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .wordListHeader {
+      margin-top: 15px;
+      min-width: 526px;
+    }
+
+    .wordListHeader #selectAllBtn {
+      grid-column: 2;
+      justify-self: center;
+      white-space: nowrap;
+    }
+
+    .wordListHeader .reverseBtn {
+      grid-column: 4;
+      justify-self: center;
+      white-space: nowrap;
+    }
+
+    .wordListHeader .deleteSelectedBtn {
+      grid-column: 6;
+      justify-self: center;
+      width: auto;
+      white-space: nowrap;
+    }
+
+    .danger {
+      background: var(--color-danger);
+    }
+
+    .wordItem {
+      border-bottom: 1px solid var(--color-border);
+      padding: 6px;
+      background: var(--color-surface);
+      transition: transform 0.15s ease;
+    }
+
+    .wordItem.dragging {
+      position: fixed;
+      z-index: 1000;
+      box-sizing: border-box;
+      box-shadow: 0 10px 24px var(--color-shadow), 0 3px 8px var(--color-shadow);
+      transform: scale(1.03);
+      opacity: 0.97;
+      border-radius: 10px;
+      border-bottom: none;
+      pointer-events: none;
+      transition: box-shadow 0.15s ease, transform 0.15s ease;
+    }
+
+    .wordItemPlaceholder {
+      border: 2px dashed var(--color-accent);
+      border-radius: 8px;
+      background: var(--color-bg);
+      box-sizing: border-box;
+      margin: 4px 0;
+    }
+
+    .notice {
+      color: var(--color-danger);
+    }
+
+    .smallBtn {
+      background: var(--color-danger);
+      border-radius: 8px;
+      padding: 8px 10px;
+      font-size: 14px;
+      color: var(--color-accent-text);
+      border: none;
+      cursor: pointer;
+    }
+
+    .editInput {
+      padding: 8px;
+      border-radius: 8px;
+      border: 1px solid var(--color-border);
+      font-size: 14px;
+    }
+
+    /* 単語欄・トップの表裏入力欄はShift+Enterで改行できるtextarea。
+       複数行になった分だけ自動で高さが伸びるようJSで制御するため、
+       ここではリサイズハンドルを消し、はみ出し分を隠すだけにしておく */
+    .wordRow textarea,
+    .editInput {
+      font-family: inherit;
+      line-height: 1.4;
+      resize: none;
+      overflow: hidden;
+      display: block;
+    }
+
+    .frontInput,
+    .backInput {
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    .checkWrap {
+      position: relative;
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .deleteCheck {
+      display: none;
+    }
+
+    .checkMark {
+      width: 26px;
+      height: 26px;
+      box-sizing: border-box;
+      flex-shrink: 0;
+      border: 2px solid var(--color-accent);
+      border-radius: 50%;
+      background: var(--color-surface);
+      transition: all 0.2s ease;
+      position: relative;
+      box-shadow: 0 2px 6px var(--color-shadow);
+    }
+
+    .deleteCheck:checked + .checkMark {
+      background: var(--color-accent);
+      transform: scale(1.1);
+      box-shadow: 0 4px 12px var(--color-shadow);
+    }
+
+    .deleteCheck:checked + .checkMark::after {
+      content: "";
+      position: absolute;
+
+      left: 50%;
+      top: 50%;
+
+      width: 6px;
+      height: 12px;
+
+      border: solid white;
+      border-width: 0 3px 3px 0;
+      transform: translate(-50%, -60%) rotate(45deg);
+    }
+
+    .swapBtn {
+      width: 32px;
+      height: 32px;
+      flex-shrink: 0;
+
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      border: none;
+      border-radius: 50%;
+
+      background: var(--color-accent);
+      color: var(--color-accent-text);
+
+      cursor: pointer;
+      padding: 0;
+      line-height: 1;
+    }
+
+    /* 他の単語帳から取り込むモーダル */
+    .modalOverlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      padding: 20px;
+      box-sizing: border-box;
+    }
+
+    .modalBox {
+      background: var(--color-surface);
+      color: var(--color-text);
+      border-radius: 12px;
+      padding: 25px;
+      width: 100%;
+      max-width: 500px;
+      max-height: 80vh;
+      overflow-y: auto;
+      text-align: left;
+    }
+
+    .modalDesc {
+      font-size: 13px;
+      color: var(--color-text-sub);
+      margin-bottom: 10px;
+    }
+
+    .importBookList,
+    .importWordList {
+      max-height: 320px;
+      overflow-y: auto;
+      border: 1px solid var(--color-border);
+      border-radius: 10px;
+    }
+
+    .importBookItem {
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--color-border);
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .importBookItem:last-child {
+      border-bottom: none;
+    }
+
+    .importBookItem:hover {
+      background: var(--color-bg);
+    }
+
+    .importBookItem .bookTitle {
+      font-weight: bold;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .importBookItem .bookCount {
+      font-size: 12px;
+      color: var(--color-text-sub);
+      flex-shrink: 0;
+    }
+
+    .importWordRow {
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--color-border);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+    }
+
+    .importWordRow:last-child {
+      border-bottom: none;
+    }
+
+    .importWordRow:hover {
+      background: var(--color-bg);
+    }
+
+    .importWordRow .wordPair {
+      font-size: 14px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .modalActions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      margin-top: 15px;
+    }
+
+    .smallActionBtn {
+      background: var(--color-border);
+      color: var(--color-text);
+      border: none;
+      border-radius: 8px;
+      padding: 6px 12px;
+      font-size: 12px;
+      cursor: pointer;
+    }
+
+    .importEmpty {
+      padding: 20px;
+      text-align: center;
+      color: var(--color-text-sub);
+      font-size: 14px;
+    }
+
+    /* スマホ幅：一覧上部の操作ボタン(全選択・表裏反転・選択削除)は単語一覧の外にあり、
+       最小幅のせいでページ全体が横にはみ出していたため、折り返せる横並びにする */
+    @media (max-width: 768px) {
+      .wordListHeader.wordItemCols {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 8px;
+        min-width: 0;
+      }
+
+      .wordListHeader.wordItemCols > span {
+        display: none;
+      }
+
+      .wordListHeader.wordItemCols button {
+        margin: 0;
+      }
+    }
+
+    /* スマホ幅：単語の各行を2段にして、横スクロールしなくても全部の操作に届くようにする
+       1段目: 番号・チェック・表・削除
+       2段目: 並び替えハンドル・表裏入れ替え・裏 */
+    @media (max-width: 768px) {
+      #wordList {
+        overflow-x: visible;
+      }
+
+      .wordItemMain.wordItemCols {
+        min-width: 0;
+        grid-template-columns: 22px 26px minmax(0, 1fr) auto;
+        grid-template-areas:
+          "num    check front del"
+          "handle swap  back  back";
+        row-gap: 6px;
+      }
+
+      .wordItemMain > .wordNumber { grid-area: num; }
+      .wordItemMain > .checkWrap { grid-area: check; }
+      .wordItemMain > .fieldWrap:nth-of-type(1) { grid-area: front; }
+      .wordItemMain > .swapBtn { grid-area: swap; justify-self: center; transform: rotate(90deg); margin: 0; }
+      .wordItemMain > .fieldWrap:nth-of-type(2) { grid-area: back; }
+      .wordItemMain > .smallBtn { grid-area: del; width: auto; padding-left: 10px; padding-right: 10px; }
+      .wordItemMain > .dragHandle { grid-area: handle; justify-self: center; }
+
+      /* ヒント・解説の入力欄は、表・裏の欄と同じ幅で縦に並べる */
+      .wordExtraFields {
+        display: block;
+        min-width: 0;
+        padding-left: 56px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <header>
+    <p class="headertitle"><a href="index.html"><img src="./images/rogo.png" height="70vh"></a></p>
+    <div id="status" style="display:none">ログイン確認中...</div>
+    <div>
+      <span id="notifBellContainer"></span>
+      <button id="settingsBtn" class="header-btn" style="display:none" onclick="goPage('settings.html')">設定</button>
+      <button id="loginBtn" class="header-btn" onclick="location.href='login.html'">ログイン</button>
+      <button id="logoutBtn" class="header-btn" style="display:none" onclick="logout()">ログアウト</button>
+    </div>
+  </header>
+
+  <main>
+
+    <div id="restrictionBanner" class="card" style="display:none; border:2px solid var(--color-danger);">
+      <strong>このアカウントは現在制限されています。</strong>
+      <p id="restrictionBannerText" style="margin:6px 0 0;"></p>
+    </div>
+
+    <div class="card">
+      <h2>単語帳情報</h2>
+      <input id="title" placeholder="単語帳タイトル"><br>
+      <textarea id="description" placeholder="説明文（例：考査範囲、授業のメモなど）"
+        style="width: 80%; max-width: 400px; height: 80px; margin-top: 10px; padding: 12px; border-radius: 10px; border: 1px solid var(--color-border); font-size: 14px; font-family: inherit; box-sizing: border-box;"></textarea>
+
+      <div class="row">
+        <label for="isPublic">公開する</label>
+        <input type="checkbox" id="isPublic" checked onchange="onIsPublicChange()">
+        <span class="publicStatus" id="publicStatus"></span>
+      </div>
+
+      <div id="msg" class="notice"></div>
+    </div>
+
+    <div class="card" id="wordArea">
+      <h2>単語を追加</h2>
+
+      <div class="wordRow">
+        <textarea id="front" rows="1" placeholder="例：犬"></textarea>
+        <textarea id="back" rows="1" placeholder="例：dog"></textarea>
+      </div>
+
+      <button onclick="addWord()">追加</button>
+
+      <div class="wordListHeader wordItemCols">
+        <span></span>
+        <button type="button" id="selectAllBtn" onclick="toggleSelectAllWords()">全選択</button>
+        <span></span>
+        <button type="button" class="reverseBtn" onclick="reverseSelectedWords()">選択項目を表裏反転</button>
+        <span></span>
+        <button type="button" class="danger deleteSelectedBtn" onclick="deleteSelectedWords()">選択削除</button>
+        <span></span>
+      </div>
+
+      <p style="font-size:12px;color:var(--color-text-sub);text-align:left;margin:6px 2px 0;">
+        ☑ で単語を選択すると、一覧上部のボタンで表裏反転・まとめて削除できます／☰ を掴んでドラッグすると並び順を変更できます／各入力欄の右の「+ヒント」「+解説」ボタンから表・裏それぞれのヒントや解説を入力できます／Enterで次の欄、Ctrl+Enterで前の欄に移動できます
+      </p>
+      <div class="list" id="wordList"></div>
+
+      <hr>
+
+      <h3>CSV操作（ファイルのみ）</h3>
+      <input type="file" id="csvFile" accept=".csv,.txt"><br><br>
+
+      <button onclick="importCSV()">CSV読み込み</button>
+      <button onclick="exportCSV()">CSV書き出し</button>
+      <button onclick="openImportModal()">他の単語帳から取り込む</button>
+
+      <br><br>
+      <button id="saveBtn" onclick="saveBook()">保存する</button>
+    </div>
+
+  </main>
+
+  <!-- 他の単語帳から単語を取り込むモーダル -->
+  <div id="importModal" class="modalOverlay" style="display:none;">
+    <div class="modalBox">
+      <h3>他の単語帳から取り込む</h3>
+
+      <div id="importStep1">
+        <p class="modalDesc">取り込み元の単語帳を選んでください</p>
+        <div id="importBookList" class="importBookList"></div>
+      </div>
+
+      <div id="importStep2" style="display:none;">
+        <p class="modalDesc">取り込む単語を選んでください</p>
+        <div style="text-align:right; margin-bottom:8px;">
+          <button type="button" class="smallActionBtn" onclick="toggleSelectAllImportWords()">全選択/解除</button>
+        </div>
+        <div id="importWordList" class="importWordList"></div>
+        <div id="importMsg" class="notice"></div>
+        <div class="modalActions">
+          <button type="button" onclick="backToBookList()">単語帳選択に戻る</button>
+          <button type="button" onclick="confirmImportWords()">選択した単語を取り込む</button>
+        </div>
+      </div>
+
+      <div class="modalActions">
+        <button type="button" onclick="closeImportModal()">閉じる</button>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <div class="footer-inner">
+      <div class="footertitle"><img src="./images/rogo.png" height="70vh"></div>
+      <div class="footer-links">
+        <a href="index.html">ホーム</a>
+        <a href="list.html">検索</a>
+        <a href="create.html">作成</a>
+        <a href="favorites.html">お気に入り</a>
+        <a href="settings.html">設定</a>
+        <a href="update.html">更新履歴</a>
+        <a href="contact.html">お問い合わせ</a>
+      </div>
+      <div class="copy">© 2026 TEAM-Minimal, Shiratae</div>
+    </div>
+  </footer>
+
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyD7CJmO3eAO0o2EPRDsVqTtZ_whRd_3-3E",
+      authDomain: "quiz1-4ffdc.firebaseapp.com",
+      projectId: "quiz1-4ffdc",
+      storageBucket: "quiz1-4ffdc.firebasestorage.app",
+      messagingSenderId: "152062126332",
+      appId: "1:152062126332:web:845af237a1a76207214f79"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    // Firestoreのバッチは1回あたり最大500件の書き込みに制限されているため、
+    // 単語数の多い単語帳(CSV取り込み等で500語以上)でも失敗しないよう、
+
+    // 入力欄にフォーカスを移し、カーソルを文字の一番うしろに置く
+    // （focus()だけだとカーソルが先頭に来てしまい、続けて入力しづらかったため）
+    function focusAtEnd(el) {
+      el.focus();
+      const end = el.value.length;
+      try { el.setSelectionRange(end, end); } catch (e) { }
+    }
+    // db.batch()と同じ使い方(set/update/delete/commit)のまま450件ごとに分けて書き込む
+    function createChunkedBatch() {
+      const ops = [];
+      return {
+        set(ref, data, options) { ops.push(b => options ? b.set(ref, data, options) : b.set(ref, data)); return this; },
+        update(ref, data) { ops.push(b => b.update(ref, data)); return this; },
+        delete(ref) { ops.push(b => b.delete(ref)); return this; },
+        async commit() {
+          for (let k = 0; k < ops.length; k += 450) {
+            const batch = db.batch();
+            ops.slice(k, k + 450).forEach(op => op(batch));
+            await batch.commit();
+          }
+        }
+      };
+    }
+
+    let currentUser = null;
+    let bookId = null;
+    let localWordSeq = 0;
+    function nextLocalId() {
+      localWordSeq++;
+      return "local_" + localWordSeq;
+    }
+
+    const statusDiv = document.getElementById("status");
+    const loginBtn = document.getElementById("loginBtn");
+    const logoutBtn = document.getElementById("logoutBtn");
+    const settingsBtn = document.getElementById("settingsBtn");
+
+    // ログイン情報のキャッシュを利用してヘッダーを即時表示
+    const savedUser =
+      JSON.parse(localStorage.getItem("cachedUser"));
+
+    if (savedUser) {
+      settingsBtn.style.display = "inline-block";
+      logoutBtn.style.display = "inline-block";
+      loginBtn.style.display = "none";
+    }
+
+    // このページでは単語の入力内容がすべてブラウザ上だけに保持されており、
+    // 「保存する」を押すまでどこにも保存されない。そのため、以前はログアウト検知時に
+    // 即座にlogin.htmlへ強制遷移していたが、入力中に一時的な認証エラーが起きただけでも
+    // それまで入力していた単語がすべて失われてしまう不具合があった。
+    // ここでは画面遷移はせず、ヘッダーの表示とメッセージだけ更新して入力内容を保持する。
+    function handleSignedOut() {
+      // cachedUserは明示的なログアウト操作(logout())でのみ削除する
+      // (ここで消すと、次に一時的にnullが発火した際の再確認猶予が効かなくなるため)
+      statusDiv.textContent = "ログアウト中";
+      loginBtn.style.display = "inline-block";
+      logoutBtn.style.display = "none";
+      settingsBtn.style.display = "none";
+      document.getElementById("msg").textContent =
+        "ログインセッションが切れました。保存するには右上から再度ログインしてください（このページの入力内容はそのまま残っています）。";
+    }
+
+    /* Firebaseが端末に保存された認証状態を復元し終える前に、onAuthStateChangedが
+       一時的にnullで発火することがある。ログイン中のキャッシュ(cachedUser)が
+       残っている場合は即座にログアウト扱いにせず、少し待ってから本当に
+       未ログインのままかを再確認する（実際はログインしたままなのに強制的に
+       ログイン画面へ飛ばされてしまう不具合を防ぐため）。 */
+    auth.onAuthStateChanged(user => {
+      currentUser = user;
+      if (user) {
+        localStorage.setItem(
+          "cachedUser",
+          JSON.stringify({ uid: user.uid })
+        );
+        statusDiv.textContent = "ログイン中: " + user.uid;
+        loginBtn.style.display = "none";
+        logoutBtn.style.display = "inline-block";
+        settingsBtn.style.display = "inline-block";
+        checkRestrictionStatus(user.uid);
+      } else if (localStorage.getItem("cachedUser")) {
+        (function () {
+          // 端末やネットワークが遅いと1回・1.5秒の再確認だけでは間に合わないことがあるため、
+          // 間隔を広げながら最大4回(合計15秒)まで再確認してから本当に未ログインと判断する。
+          const delays = [1000, 2000, 4000, 8000];
+          const recheck = (i) => {
+            setTimeout(() => {
+              if (auth.currentUser) return;
+              if (i + 1 < delays.length) recheck(i + 1);
+              else {
+                handleSignedOut();
+                if (window.VOCABOOST_SHOW_SESSION_LOST_NOTICE) {
+                  window.VOCABOOST_SHOW_SESSION_LOST_NOTICE(!navigator.onLine);
+                }
+              }
+            }, delays[i]);
+          };
+          recheck(0);
+        })();
+      } else {
+        handleSignedOut();
+      }
+    });
+
+    // アカウントが運営によって書き込み制限されているかを確認し、
+    // 制限中であれば保存操作をブロックしてバナーを表示する
+    async function checkRestrictionStatus(uid) {
+      try {
+        const snap = await db.collection("users").doc(uid).get();
+        const data = snap.exists ? snap.data() : null;
+        if (!data || !data.restrictedUntil) return;
+
+        const until = data.restrictedUntil.toDate ? data.restrictedUntil.toDate() : new Date(data.restrictedUntil);
+        if (until <= new Date()) return;
+
+        window.__isRestricted = true;
+        const label = until.getFullYear() >= 2900 ? "無期限" : until.toLocaleDateString("ja-JP") + "まで";
+        document.getElementById("restrictionBannerText").textContent =
+          `単語帳の作成・保存ができません（解除予定: ${label}）`;
+        document.getElementById("restrictionBanner").style.display = "block";
+      } catch (e) {
+        console.error("restriction check failed", e);
+      }
+    }
+
+    function blockIfRestricted() {
+      if (window.__isRestricted) {
+        alert("アカウントが制限されているため、この操作はできません");
+        return true;
+      }
+      return false;
+    }
+
+    function goPage(page) {
+      if (page === "index.html") {
+        location.href = "index.html";
+        return;
+      }
+      // currentUserはFirebaseの認証確認(非同期)が完了するまでnullのままのため、
+      // ページ読み込み直後にボタンを押すと「未ログイン」と誤判定されることがあった。
+      // localStorageのキャッシュがあれば、確認が終わっていなくても遷移してよいと判断する。
+      const hasCachedUser = !!localStorage.getItem("cachedUser");
+      if (currentUser || hasCachedUser) {
+        location.href = page;
+      } else {
+        alert("ログインしてください");
+        location.href = "login.html";
+      }
+    }
+
+    function logout() {
+      localStorage.removeItem("cachedUser");
+      auth.signOut();
+    }
+
+    // 公開設定は保存ボタンを押すまでDBに反映しない。ここでは表示テキストの更新のみ行う
+    function onIsPublicChange() {
+      const checkbox = document.getElementById("isPublic");
+      const statusEl = document.getElementById("publicStatus");
+      if (statusEl) statusEl.textContent = checkbox.checked ? "（公開されます）" : "（非公開で保存されます）";
+    }
+
+    // 単語帳・単語はすべて保存ボタンを押した時点でまとめてDBに書き込む
+    let isSaving = false;
+
+    async function saveBook() {
+      if (blockIfRestricted()) return;
+
+      if (isSaving) return; // 保存処理が完了するまで連打による多重作成を防ぐ
+
+      const msgEl = document.getElementById("msg");
+      if (!currentUser) {
+        msgEl.textContent = "ログインしてください（右上の「ログイン」から再度ログインすると保存できます）。";
+        return;
+      }
+
+      const title = document.getElementById("title").value.trim();
+      const description = document.getElementById("description").value.trim();
+      const isPublic = document.getElementById("isPublic").checked;
+      const msg = document.getElementById("msg");
+
+      if (!title) {
+        msg.textContent = "タイトルを入力してください";
+        return;
+      }
+
+      const words = Array.from(document.querySelectorAll("#wordList .wordItem")).map(row => ({
+        front: row.querySelector('[data-type="front"]').value.trim(),
+        back: row.querySelector('[data-type="back"]').value.trim(),
+        hint: (row.querySelector('[data-type="hint"]')?.value || "").trim(),
+        note: (row.querySelector('[data-type="note"]')?.value || "").trim()
+      })).filter(w => w.front && w.back);
+
+      if (isPublic && words.length === 0) {
+        msg.textContent = "公開するには単語を1つ以上追加してください";
+        return;
+      }
+
+      msg.textContent = "保存しています...";
+
+      isSaving = true;
+      const saveBtn = document.getElementById("saveBtn");
+      if (saveBtn) saveBtn.disabled = true;
+
+      try {
+        // list.html/view.htmlが未ログインの閲覧者にも作成者の写真を表示できるよう、
+        // ownerNameと同様にwordbookドキュメント側へ写真も複製して保存しておく
+        // （usersコレクションの読み取りにはログインが必要なため）
+        let ownerPhotoURL = null;
+        try {
+          const ownerDoc = await db.collection("users").doc(currentUser.uid).get();
+          ownerPhotoURL = ownerDoc.exists ? (ownerDoc.data().photoURL || null) : null;
+        } catch (e) {
+          console.warn("自分の写真の取得に失敗しました", e);
+        }
+
+        const doc = await db.collection("wordbooks").add({
+          title: title,
+          // 検索ページでタイトルの一部から探せるようにする検索用キー
+          searchKeys: window.VOCABOOST_SEARCH_KEYS ? window.VOCABOOST_SEARCH_KEYS(title) : [],
+          description: description,
+          isPublic: isPublic,
+          owner: currentUser.uid,
+          ownerName: currentUser.displayName || "名無し",
+          ownerPhotoURL: ownerPhotoURL,
+          // 期(学年タグ)。list.htmlで未ログインの閲覧者でも学年ごとに絞り込めるよう複製する
+          ownerCohort: window.VOCABOOST_COHORT_FROM_EMAIL ? window.VOCABOOST_COHORT_FROM_EMAIL(currentUser.email) : 0,
+          wordCount: words.length,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+
+        bookId = doc.id;
+
+        const batch = createChunkedBatch();
+        words.forEach((w, idx) => {
+          const ref = db.collection("wordbooks").doc(bookId).collection("words").doc();
+          batch.set(ref, {
+            front: w.front,
+            back: w.back,
+            hint: w.hint || "",
+            note: w.note || "",
+            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+            order: (idx + 1) * 1000
+          });
+        });
+        await batch.commit();
+
+        // 公開単語帳のときだけ、フォロワーに新規作成を通知する
+        // （非公開の単語帳はフォロワーが開けないため通知しない）
+        if (isPublic && window.VOCABOOST_NOTIFY_FOLLOWERS_NEW_BOOK) {
+          window.VOCABOOST_NOTIFY_FOLLOWERS_NEW_BOOK(
+            db, currentUser.uid, currentUser.displayName, bookId, title
+          );
+        }
+
+        location.href = "view.html?id=" + bookId;
+      } catch (e) {
+        console.error(e);
+        msg.textContent = "保存に失敗しました";
+        isSaving = false;
+        if (saveBtn) saveBtn.disabled = false;
+      }
+    }
+
+    // Shift+Enterで改行できるtextarea(表・裏・ヒント・解説の各入力欄)の高さを、
+    // 入力内容の行数に合わせて自動調整する
+    function autoResizeTextarea(el) {
+      el.style.height = "auto";
+      el.style.height = el.scrollHeight + "px";
+    }
+
+    function addWord() {
+      const frontEl = document.getElementById("front");
+      const backEl = document.getElementById("back");
+      const f = frontEl.value.trim();
+      const b = backEl.value.trim();
+      if (!f || !b) return;
+
+      addWordToList(nextLocalId(), f, b);
+
+      frontEl.value = "";
+      backEl.value = "";
+      autoResizeTextarea(frontEl);
+      autoResizeTextarea(backEl);
+      renumberWords();
+    }
+
+    function addWordToList(id, f, b, hint, note) {
+      hint = hint || "";
+      note = note || "";
+
+      const div = document.createElement("div");
+
+      div.className = "wordItem";
+      div.id = "word_" + id;
+
+      div.innerHTML = `
+        <div class="wordItemMain wordItemCols">
+          <span class="wordNumber"></span>
+
+          <label class="checkWrap">
+            <input type="checkbox"
+                  class="deleteCheck"
+                  value="${id}">
+            <span class="checkMark"></span>
+          </label>
+
+          <div class="fieldWrap">
+            <textarea
+              class="editInput frontInput"
+              rows="1"
+              data-type="front"
+            >${escapeHtml(f)}</textarea>
+            <button type="button" class="fieldToggleBtn${hint ? " hasValue" : ""}" onclick="toggleWordField('${id}','hint')">+ヒント</button>
+          </div>
+
+          <button
+            class="swapBtn"
+            onclick="swapWord('${id}')">
+            ⇄
+          </button>
+
+          <div class="fieldWrap">
+            <textarea
+              class="editInput backInput"
+              rows="1"
+              data-type="back"
+            >${escapeHtml(b)}</textarea>
+            <button type="button" class="fieldToggleBtn${note ? " hasValue" : ""}" onclick="toggleWordField('${id}','note')">+解説</button>
+          </div>
+
+          <button class="smallBtn" onclick="deleteWord('${id}')">
+            削除
+          </button>
+
+          <span class="dragHandle" title="ドラッグして並び替え">
+            <span></span><span></span><span></span>
+          </span>
+        </div>
+
+        <div class="wordExtraFields">
+          <div class="extraFieldRow hintFieldRow" id="hintRow_${id}" style="display:${hint ? "flex" : "none"};">
+            <span class="extraFieldLabel">ヒント</span>
+            <textarea class="editInput" rows="1" data-type="hint" placeholder="表を暗記・出題する時に一緒に表示されます">${escapeHtml(hint)}</textarea>
+          </div>
+          <div class="extraFieldRow noteFieldRow" id="noteRow_${id}" style="display:${note ? "flex" : "none"};">
+            <span class="extraFieldLabel">解説</span>
+            <textarea class="editInput" rows="1" data-type="note" placeholder="裏の答え合わせの時に一緒に表示されます">${escapeHtml(note)}</textarea>
+          </div>
+        </div>
+      `;
+
+      document.getElementById("wordList").appendChild(div);
+
+      // 既に複数行の内容(CSV取り込み・他の単語帳からの取り込み等)を持つ場合に
+      // 高さが正しく合うよう、DOMへの追加後にリサイズしておく
+      div.querySelectorAll("textarea").forEach(autoResizeTextarea);
+    }
+
+    function toggleWordField(id, field) {
+      const row = document.getElementById(`${field === "hint" ? "hintRow" : "noteRow"}_${id}`);
+      if (!row) return;
+
+      const willShow = row.style.display === "none";
+      row.style.display = willShow ? "flex" : "none";
+
+      if (willShow) {
+        const input = row.querySelector(`[data-type="${field}"]`);
+        if (input) {
+          focusAtEnd(input);
+          // 非表示(display:none)の間はscrollHeightが常に0になるため、
+          // 表示した直後に高さを再計算し直す（そうしないと表示された途端
+          // テキストボックスの高さがおかしく(潰れて)見えてしまう）
+          autoResizeTextarea(input);
+        }
+      }
+    }
+
+    function renumberWords() {
+      const rows = document.querySelectorAll("#wordList .wordItem");
+      rows.forEach((row, idx) => {
+        const numEl = row.querySelector(".wordNumber");
+        if (numEl) numEl.textContent = idx + 1;
+      });
+    }
+
+    function deleteWord(id) {
+      if (!confirm("削除しますか？")) return;
+      const row = document.getElementById("word_" + id);
+      if (row) row.remove();
+      renumberWords();
+    }
+
+    function swapWord(id) {
+      const row = document.getElementById("word_" + id);
+      if (!row) return;
+
+      const frontInput = row.querySelector('[data-type="front"]');
+      const backInput = row.querySelector('[data-type="back"]');
+      const hintInput = row.querySelector('[data-type="hint"]');
+      const noteInput = row.querySelector('[data-type="note"]');
+
+      const f = frontInput.value;
+      const b = backInput.value;
+
+      frontInput.value = b;
+      backInput.value = f;
+      autoResizeTextarea(frontInput);
+      autoResizeTextarea(backInput);
+
+      if (hintInput && noteInput) {
+        const h = hintInput.value;
+        const n = noteInput.value;
+        hintInput.value = n;
+        noteInput.value = h;
+        autoResizeTextarea(hintInput);
+        autoResizeTextarea(noteInput);
+      }
+    }
+
+    function toggleSelectAllWords() {
+      const checks = document.querySelectorAll("#wordList .deleteCheck");
+      const btn = document.getElementById("selectAllBtn");
+
+      if (checks.length === 0) return;
+
+      const allChecked = Array.from(checks).every(cb => cb.checked);
+
+      checks.forEach(cb => cb.checked = !allChecked);
+      btn.textContent = allChecked ? "全選択" : "全解除";
+    }
+
+    function reverseSelectedWords() {
+      const checks = document.querySelectorAll(".deleteCheck:checked");
+
+      if (checks.length === 0) {
+        alert("単語を選択してください");
+        return;
+      }
+
+      if (!confirm(`${checks.length}個の単語の表裏を入れ替えますか？`)) {
+        return;
+      }
+
+      checks.forEach(check => {
+        const id = check.value;
+        const row = document.getElementById("word_" + id);
+        const frontInput = row.querySelector('[data-type="front"]');
+        const backInput = row.querySelector('[data-type="back"]');
+        const hintInput = row.querySelector('[data-type="hint"]');
+        const noteInput = row.querySelector('[data-type="note"]');
+
+        const f = frontInput.value;
+        const b = backInput.value;
+
+        frontInput.value = b;
+        backInput.value = f;
+        autoResizeTextarea(frontInput);
+        autoResizeTextarea(backInput);
+
+        if (hintInput && noteInput) {
+          const h = hintInput.value;
+          const n = noteInput.value;
+          hintInput.value = n;
+          noteInput.value = h;
+          autoResizeTextarea(hintInput);
+          autoResizeTextarea(noteInput);
+        }
+      });
+
+      alert("表裏を入れ替えました");
+    }
+
+    function deleteSelectedWords() {
+      const checks = document.querySelectorAll(".deleteCheck:checked");
+
+      if (checks.length === 0) {
+        alert("選択してください");
+        return;
+      }
+
+      if (!confirm(`${checks.length}個の単語を削除しますか？`)) {
+        return;
+      }
+
+      checks.forEach(check => {
+        const row = document.getElementById("word_" + check.value);
+        if (row) row.remove();
+      });
+
+      renumberWords();
+    }
+
+    // ===== 単語の並び替え（ドラッグ&ドロップ） =====
+
+    function setupDragReorder(listId) {
+      const list = document.getElementById(listId);
+      if (!list) return;
+
+      list.addEventListener("pointerdown", (e) => {
+        const handle = e.target.closest(".dragHandle");
+        if (!handle) return;
+
+        const item = handle.closest(".wordItem");
+        if (!item) return;
+
+        e.preventDefault();
+
+        const pointerId = e.pointerId;
+        handle.setPointerCapture(pointerId);
+
+        const startRect = item.getBoundingClientRect();
+        const startY = e.clientY;
+
+        // ドラッグ中、元の場所を確保しておくためのプレースホルダーを挿入
+        const placeholder = document.createElement("div");
+        placeholder.className = "wordItemPlaceholder";
+        placeholder.style.height = startRect.height + "px";
+        item.parentNode.insertBefore(placeholder, item.nextSibling);
+
+        // 要素を画面に固定し、ポインターに追従して自由に動かせるようにする
+        item.classList.add("dragging");
+        item.style.position = "fixed";
+        item.style.top = startRect.top + "px";
+        item.style.left = startRect.left + "px";
+        item.style.width = startRect.width + "px";
+
+        const onMove = (ev) => {
+          if (ev.pointerId !== pointerId) return;
+
+          // ポインターの動きにそのまま追従させる（浮き上がった状態で移動）
+          const deltaY = ev.clientY - startY;
+          item.style.top = (startRect.top + deltaY) + "px";
+
+          const currentCenter = startRect.top + startRect.height / 2 + deltaY;
+
+          const siblings = Array.from(list.querySelectorAll(".wordItem:not(.dragging)"));
+
+          let after = null;
+          for (const sib of siblings) {
+            const box = sib.getBoundingClientRect();
+            if (currentCenter < box.top + box.height / 2) {
+              after = sib;
+              break;
+            }
+          }
+
+          movePlaceholder(list, placeholder, after);
+        };
+
+        const onUp = (ev) => {
+          if (ev.pointerId !== pointerId) return;
+
+          handle.releasePointerCapture(pointerId);
+          handle.removeEventListener("pointermove", onMove);
+          handle.removeEventListener("pointerup", onUp);
+          handle.removeEventListener("pointercancel", onUp);
+
+          // プレースホルダーの位置に要素を戻し、固定表示を解除する
+          placeholder.parentNode.insertBefore(item, placeholder);
+          placeholder.remove();
+
+          item.classList.remove("dragging");
+          item.style.position = "";
+          item.style.top = "";
+          item.style.left = "";
+          item.style.width = "";
+
+          renumberWords();
+        };
+
+        handle.addEventListener("pointermove", onMove);
+        handle.addEventListener("pointerup", onUp);
+        handle.addEventListener("pointercancel", onUp);
+      });
+    }
+
+    // プレースホルダーの移動先が変わったとき、他の単語がなめらかに
+    // スライドして見えるようにする（FLIPテクニック）
+    function movePlaceholder(list, placeholder, after) {
+      const currentNext = placeholder.nextElementSibling || null;
+      const target = after || null;
+
+      if (target === placeholder) return;
+      if (target === currentNext) return;
+
+      const items = Array.from(list.children).filter(
+        el => !el.classList.contains("dragging")
+      );
+
+      const firstRects = new Map();
+      items.forEach(el => firstRects.set(el, el.getBoundingClientRect()));
+
+      if (target) {
+        list.insertBefore(placeholder, target);
+      } else {
+        list.appendChild(placeholder);
+      }
+
+      items.forEach(el => {
+        const first = firstRects.get(el);
+        const last = el.getBoundingClientRect();
+        const deltaY = first.top - last.top;
+
+        if (deltaY) {
+          el.style.transition = "none";
+          el.style.transform = `translateY(${deltaY}px)`;
+          requestAnimationFrame(() => {
+            el.style.transition = "transform 0.15s ease";
+            el.style.transform = "";
+          });
+        }
+      });
+    }
+
+    setupDragReorder("wordList");
+    onIsPublicChange();
+
+    // ダブルクオートで囲まれたフィールド内の改行・カンマ・""（エスケープされた
+    // 引用符）を正しく扱うCSVパーサー(RFC4180ライク)。単純に改行で行分割すると、
+    // セル内に改行を含む単語(表・裏・ヒント・解説)が別の行として分かれてしまうため。
+    function parseCSVText(text) {
+      const rows = [];
+      let row = [];
+      let field = "";
+      let inQuotes = false;
+      let i = 0;
+      const len = text.length;
+
+      while (i < len) {
+        const ch = text[i];
+
+        if (inQuotes) {
+          if (ch === '"') {
+            if (text[i + 1] === '"') {
+              field += '"';
+              i += 2;
+              continue;
+            }
+            inQuotes = false;
+            i++;
+            continue;
+          }
+          field += ch;
+          i++;
+          continue;
+        }
+
+        if (ch === '"') {
+          inQuotes = true;
+          i++;
+          continue;
+        }
+        if (ch === ",") {
+          row.push(field);
+          field = "";
+          i++;
+          continue;
+        }
+        if (ch === "\r") {
+          i++;
+          continue;
+        }
+        if (ch === "\n") {
+          row.push(field);
+          rows.push(row);
+          row = [];
+          field = "";
+          i++;
+          continue;
+        }
+        field += ch;
+        i++;
+      }
+
+      if (field !== "" || row.length > 0) {
+        row.push(field);
+        rows.push(row);
+      }
+
+      return rows;
+    }
+
+    // セルの内容がカンマ・改行・ダブルクオートを含む場合だけダブルクオートで囲む
+    function csvField(value) {
+      const str = String(value == null ? "" : value);
+      if (/[",\n\r]/.test(str)) {
+        return '"' + str.replace(/"/g, '""') + '"';
+      }
+      return str;
+    }
+
+    async function importCSV() {
+      const file = document.getElementById("csvFile").files[0];
+      if (!file) {
+        alert("CSVファイルを選択してください");
+        return;
+      }
+
+      const text = await file.text();
+      const rows = parseCSVText(text.replace(/^\uFEFF/, ""));
+
+      // 1行のカラム数で判定する。2列なら従来通り「表,裏」、
+      // 4列なら「表,ヒント,裏,解説」として読み込む。
+      // セルの前後の空白・改行のみtrimし、セル内部の改行は保持する。
+      for (const cols of rows) {
+        const trimmedCols = cols.map(c => c.trim());
+
+        if (trimmedCols.length >= 4) {
+          const [f, hint, b, note] = trimmedCols;
+          if (f && b) {
+            addWordToList(nextLocalId(), f, b, hint, note);
+          }
+        } else {
+          const [f, b] = trimmedCols;
+          if (f && b) {
+            addWordToList(nextLocalId(), f, b);
+          }
+        }
+      }
+
+      document.getElementById("csvFile").value = "";
+      renumberWords();
+    }
+
+    function exportCSV() {
+      const rows = document.querySelectorAll("#wordList .wordItem");
+      let csv = "";
+
+      rows.forEach(row => {
+        const f = row.querySelector('[data-type="front"]').value;
+        const b = row.querySelector('[data-type="back"]').value;
+        csv += `${csvField(f)},${csvField(b)}\n`;
+      });
+
+      const blob = new Blob([csv], { type: "text/plain;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "words.csv";
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    /* ===== 他の単語帳から単語を取り込む ===== */
+
+    let importSelectedBookId = null;
+    let importWords = []; // {id, front, back} の配列（取り込み元の単語、表示順=orderフィールド順）
+
+    async function openImportModal() {
+      document.getElementById("importModal").style.display = "flex";
+      document.getElementById("importStep1").style.display = "block";
+      document.getElementById("importStep2").style.display = "none";
+
+      const listArea = document.getElementById("importBookList");
+      listArea.innerHTML = `<div class="importEmpty">読み込み中...</div>`;
+
+      try {
+        const snap = await db.collection("wordbooks")
+          .where("owner", "==", currentUser.uid)
+          .orderBy("createdAt", "desc")
+          .get();
+
+        const books = snap.docs
+          .map(d => ({ id: d.id, title: d.data().title || "(無題)", wordCount: d.data().wordCount || 0 }));
+
+        if (books.length === 0) {
+          listArea.innerHTML = `<div class="importEmpty">取り込み元にできる単語帳がありません</div>`;
+          return;
+        }
+
+        listArea.innerHTML = "";
+        books.forEach(b => {
+          const item = document.createElement("div");
+          item.className = "importBookItem";
+          item.innerHTML = `
+            <span class="bookTitle">${escapeHtml(b.title)}</span>
+            <span class="bookCount">${Number(b.wordCount) || 0}語</span>
+          `;
+          item.addEventListener("click", () => selectImportBook(b.id, b.title));
+          listArea.appendChild(item);
+        });
+
+      } catch (e) {
+        console.error(e);
+        listArea.innerHTML = `<div class="importEmpty">読み込みに失敗しました</div>`;
+      }
+    }
+
+    async function selectImportBook(id, title) {
+      importSelectedBookId = id;
+
+      document.getElementById("importStep1").style.display = "none";
+      document.getElementById("importStep2").style.display = "block";
+
+      const wordArea = document.getElementById("importWordList");
+      wordArea.innerHTML = `<div class="importEmpty">読み込み中...</div>`;
+      document.getElementById("importMsg").textContent = "";
+
+      try {
+        // 単語一覧はドラッグ&ドロップで並び替えられるため、表示上の並び順は
+        // createdAt(作成日時)ではなくorderフィールドで決まる。取り込み元の
+        // 単語帳を開いた時と同じ順番で持ってこられるよう、view.html/edit.html
+        // と同様にorder順で取得し、まだorderが無い古いデータのみcreatedAt順に
+        // フォールバックする。
+        let snap = await db.collection("wordbooks")
+          .doc(id)
+          .collection("words")
+          .orderBy("order")
+          .get();
+
+        if (snap.empty) {
+          snap = await db.collection("wordbooks")
+            .doc(id)
+            .collection("words")
+            .orderBy("createdAt")
+            .get();
+        }
+
+        importWords = snap.docs.map(d => ({
+          id: d.id,
+          front: d.data().front,
+          back: d.data().back,
+          hint: d.data().hint || "",
+          note: d.data().note || ""
+        }));
+
+        if (importWords.length === 0) {
+          wordArea.innerHTML = `<div class="importEmpty">単語が登録されていません</div>`;
+          return;
+        }
+
+        wordArea.innerHTML = "";
+        importWords.forEach(w => {
+          const row = document.createElement("label");
+          row.className = "importWordRow";
+          row.innerHTML = `
+            <input type="checkbox" class="importWordCheck" data-id="${w.id}" checked>
+            <span class="wordPair">${escapeHtml(w.front)} → ${escapeHtml(w.back)}</span>
+          `;
+          wordArea.appendChild(row);
+        });
+
+      } catch (e) {
+        console.error(e);
+        wordArea.innerHTML = `<div class="importEmpty">読み込みに失敗しました</div>`;
+      }
+    }
+
+    function backToBookList() {
+      document.getElementById("importStep1").style.display = "block";
+      document.getElementById("importStep2").style.display = "none";
+    }
+
+    function toggleSelectAllImportWords() {
+      const checks = document.querySelectorAll(".importWordCheck");
+      const allChecked = Array.from(checks).every(c => c.checked);
+      checks.forEach(c => c.checked = !allChecked);
+    }
+
+    function closeImportModal() {
+      document.getElementById("importModal").style.display = "none";
+      importSelectedBookId = null;
+      importWords = [];
+    }
+
+    function confirmImportWords() {
+      const checks = document.querySelectorAll(".importWordCheck:checked");
+      const selectedIds = Array.from(checks).map(c => c.dataset.id);
+
+      if (selectedIds.length === 0) {
+        document.getElementById("importMsg").textContent = "取り込む単語を選択してください";
+        return;
+      }
+
+      // 選択された単語を、取り込み元での並び順を保ったまま追加する
+      const selectedIdSet = new Set(selectedIds);
+      const orderedSelected = importWords.filter(w => selectedIdSet.has(w.id));
+
+      orderedSelected.forEach(w => {
+        addWordToList(nextLocalId(), w.front, w.back, w.hint, w.note);
+      });
+
+      renumberWords();
+      closeImportModal();
+    }
+
+    const front = document.getElementById("front");
+    const back = document.getElementById("back");
+
+    // Shift+Enterは改行(textarea標準の動作のまま)、Enter単独の時だけ
+    // フォーカス移動・単語追加を行う
+    front.addEventListener("keydown", function (event) {
+      // Ctrl+Enter(MacはCmd+Enter)は1つ前に戻る操作。表の欄より前は無いので何もしない
+      if (event.key === "Enter" && (event.ctrlKey || event.metaKey)) {
+        event.preventDefault();
+        return;
+      }
+      if (event.key === "Enter" && !event.shiftKey) {
+        event.preventDefault(); // フォーム送信を防ぐ（必要に応じて）
+        focusAtEnd(back);
+      }
+    });
+    back.addEventListener("keydown", async function (event) {
+      // Ctrl+Enter(MacはCmd+Enter)で表の欄に戻る
+      if (event.key === "Enter" && (event.ctrlKey || event.metaKey)) {
+        event.preventDefault();
+        focusAtEnd(front);
+        return;
+      }
+      if (event.key === "Enter" && !event.shiftKey) {
+        event.preventDefault();
+
+        // 単語追加
+        await addWord();
+
+        // front に戻る
+        focusAtEnd(front);
+      }
+    });
+
+    front.addEventListener("input", () => autoResizeTextarea(front));
+    back.addEventListener("input", () => autoResizeTextarea(back));
+
+    // 単語一覧の各行でEnterを押すと、左→右→次の行の左→次の行の右…の順にフォーカスが移動する
+    // (Shift+Enterは改行のため対象外)
+    // Ctrl+Enter(MacはCmd+Enter)で1つ前の欄に戻る（Enterの逆順：裏→同じ行の表→前の行の裏…）
+    document.getElementById("wordList").addEventListener("keydown", function (event) {
+      if (event.key !== "Enter" || !(event.ctrlKey || event.metaKey)) return;
+      const target = event.target;
+      if (!target.classList || !target.classList.contains("editInput")) return;
+
+      const row = target.closest(".wordItem");
+      if (!row) return;
+
+      event.preventDefault();
+
+      let input = null;
+      if (target.dataset.type === "front") {
+        const prevRow = row.previousElementSibling;
+        input = prevRow && prevRow.querySelector('[data-type="back"]');
+      } else {
+        input = row.querySelector('[data-type="front"]');
+      }
+      if (input) focusAtEnd(input);
+    });
+
+    document.getElementById("wordList").addEventListener("keydown", function (event) {
+      if (event.key !== "Enter" || event.shiftKey || event.ctrlKey || event.metaKey) return;
+      const target = event.target;
+      if (!target.classList || !target.classList.contains("editInput")) return;
+
+      const row = target.closest(".wordItem");
+      if (!row) return;
+
+      event.preventDefault();
+
+      if (target.dataset.type === "front") {
+        const backInput = row.querySelector('[data-type="back"]');
+        if (backInput) focusAtEnd(backInput);
+        return;
+      }
+
+      const nextRow = row.nextElementSibling;
+      if (nextRow) {
+        const nextFrontInput = nextRow.querySelector('[data-type="front"]');
+        if (nextFrontInput) focusAtEnd(nextFrontInput);
+      }
+    });
+
+    // 単語一覧内のtextarea(表・裏・ヒント・解説)は、入力に合わせて自動で高さを調整する
+    document.getElementById("wordList").addEventListener("input", function (event) {
+      if (event.target.tagName === "TEXTAREA") {
+        autoResizeTextarea(event.target);
+      }
+    });
+
+    function escapeHtml(str) {
+      return str
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+  </script>
+
+  <script src="account-widgets.js?v=20260930"></script>
+  <script src="analytics-tracker.js"></script>
+</body>
+
+</html>

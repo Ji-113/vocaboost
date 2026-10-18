@@ -1,0 +1,1337 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, user-scalable=yes">
+  <title>運営専用ページ</title>
+  <link rel="apple-touch-icon" sizes="512x512" href="./images/icon.png">
+  <link rel="icon" type="image/x-icon" href="./images/favicon.ico">
+  <link rel="stylesheet" type="text/css" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <script src="theme.js"></script>
+
+  <style>
+    .card {
+      background: var(--color-surface);
+      color: var(--color-text);
+      padding: 25px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+      text-align: left;
+    }
+
+    .card h2 {
+      margin-top: 0;
+    }
+
+    input[type="text"],
+    input:not([type]),
+    textarea,
+    select {
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid var(--color-border);
+      font-size: 14px;
+      font-family: inherit;
+      box-sizing: border-box;
+    }
+
+    .searchInput {
+      width: 100%;
+      max-width: 400px;
+      margin-bottom: 12px;
+      display: block;
+    }
+
+    .tableWrap {
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+      min-width: 640px;
+    }
+
+    th, td {
+      padding: 8px 10px;
+      border-bottom: 1px solid var(--color-border);
+      text-align: left;
+      vertical-align: middle;
+    }
+
+    th {
+      color: var(--color-text-sub);
+      font-weight: bold;
+      white-space: nowrap;
+    }
+
+    th.sortableTh {
+      cursor: pointer;
+      user-select: none;
+    }
+
+    th.sortableTh:hover {
+      color: var(--color-text);
+    }
+
+    .sortArrow {
+      display: inline-block;
+      margin-left: 4px;
+      font-size: 11px;
+    }
+
+    td.num {
+      text-align: right;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 999px;
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    .badge-normal {
+      background: var(--color-border);
+      color: var(--color-text);
+    }
+
+    .badge-warning {
+      background: #e3a92a;
+      color: #2b2200;
+    }
+
+    .badge-danger {
+      background: var(--color-danger);
+      color: #ffffff;
+    }
+
+    .smallActionBtn {
+      display: inline-block;
+      background: var(--color-border);
+      color: var(--color-text);
+      border: none;
+      border-radius: 8px;
+      padding: 6px 12px;
+      font-size: 12px;
+      cursor: pointer;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+
+    .actionCell {
+      display: flex;
+      flex-wrap: nowrap;
+      gap: 6px;
+      align-items: center;
+      white-space: nowrap;
+    }
+
+    .collapsibleHeader {
+      cursor: pointer;
+      user-select: none;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* 通報一覧：理由の欄を広めに取る */
+    .reportTable {
+      min-width: 860px;
+    }
+
+    .reportTable .reasonCol,
+    .reportTable .reasonCell {
+      min-width: 260px;
+      width: 36%;
+    }
+
+    .reportTable .reasonCell {
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+
+    .collapseIcon {
+      font-size: 13px;
+      color: var(--color-text-sub);
+    }
+
+    .danger {
+      background: var(--color-danger);
+    }
+
+    .notice {
+      color: var(--color-danger);
+      min-height: 1.2em;
+    }
+
+    .success {
+      color: var(--color-success);
+      min-height: 1.2em;
+    }
+
+    #notifBody {
+      width: 100%;
+      max-width: 500px;
+      height: 100px;
+      display: block;
+      margin: 10px 0;
+    }
+
+    .radioRow {
+      margin: 10px 0;
+      display: flex;
+      gap: 20px;
+    }
+
+    .userPickRow {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 4px;
+      border-bottom: 1px solid var(--color-border);
+    }
+
+    .userPickList {
+      max-height: 240px;
+      overflow-y: auto;
+      border: 1px solid var(--color-border);
+      border-radius: 10px;
+      margin-top: 8px;
+    }
+
+    /* モーダル */
+    .modalOverlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 300;
+      padding: 20px;
+      box-sizing: border-box;
+    }
+
+    .modalBox {
+      background: var(--color-surface);
+      color: var(--color-text);
+      border-radius: 12px;
+      padding: 25px;
+      width: 100%;
+      max-width: 480px;
+      max-height: 85vh;
+      overflow-y: auto;
+      text-align: left;
+    }
+
+    .modalBox h4 {
+      margin-bottom: 6px;
+    }
+
+    .modalActions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      margin-top: 20px;
+    }
+
+    #accessDenied {
+      text-align: center;
+      padding: 60px 20px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <header>
+    <p class="headertitle"><a href="index.html"><img src="./images/rogo.png" height="70vh"></a></p>
+    <div id="status" style="display:none">ログイン確認中...</div>
+    <div>
+      <span id="notifBellContainer"></span>
+      <button id="settingsBtn" class="header-btn" style="display:none" onclick="goPage('settings.html')">設定</button>
+      <button id="loginBtn" class="header-btn" onclick="location.href='login.html'">ログイン</button>
+      <button id="logoutBtn" class="header-btn" style="display:none" onclick="logout()">ログアウト</button>
+    </div>
+  </header>
+
+  <main>
+
+    <div id="loadingArea" style="padding:60px 20px;">確認中...</div>
+
+    <div id="accessDenied" style="display:none">
+      <p>このページには管理者のみアクセスできます。</p>
+    </div>
+
+    <div id="adminContent" style="display:none">
+      <h1>運営専用ページ</h1>
+
+      <p><a class="smallActionBtn" href="analytics.html">📊 アクセス解析を見る</a>
+        <a class="smallActionBtn" href="usage.html">🔥 Firebase使用量を見る</a></p>
+
+      <!-- 通知送信 -->
+      <section class="card">
+        <h2>通知を送信</h2>
+        <input type="text" id="notifTitle" class="searchInput" placeholder="通知タイトル">
+        <textarea id="notifBody" placeholder="本文"></textarea>
+
+        <div class="radioRow">
+          <label><input type="radio" name="notifTarget" value="all" checked onchange="onNotifTargetChange()"> 全ユーザーに送信</label>
+          <label><input type="radio" name="notifTarget" value="users" onchange="onNotifTargetChange()"> 一部のユーザーに送信</label>
+        </div>
+
+        <div id="notifUserPicker" style="display:none">
+          <input type="text" id="notifUserSearch" class="searchInput" placeholder="ユーザーを検索して選択" oninput="renderNotifUserPicker()">
+          <div id="notifUserPickerList" class="userPickList"></div>
+          <p id="notifSelectedCount" style="font-size:13px;color:var(--color-text-sub);"></p>
+        </div>
+
+        <button onclick="sendNotification()">送信する</button>
+        <div id="notifMsg" class="notice"></div>
+
+        <h3 class="collapsibleHeader" onclick="toggleSection('notifHistorySection')">
+          送信履歴 <span class="collapseIcon" id="notifHistorySection_icon">▸</span>
+        </h3>
+        <div id="notifHistorySection_body" style="display:none;">
+          <div class="tableWrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>タイトル</th>
+                  <th>対象</th>
+                  <th>送信日時</th>
+                </tr>
+              </thead>
+              <tbody id="notifHistoryBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- 通報一覧 -->
+      <section class="card">
+        <h2 class="collapsibleHeader" onclick="toggleSection('reportSection')">
+          通報一覧 <span class="collapseIcon" id="reportSection_icon">▸</span>
+        </h2>
+        <div id="reportSection_body" style="display:none;">
+          <input type="text" id="reportSearch" class="searchInput" placeholder="理由・対象名・通報者で検索" oninput="renderReportList()">
+          <div class="tableWrap">
+            <table class="reportTable">
+              <thead>
+                <tr>
+                  <th>種別</th>
+                  <th>対象</th>
+                  <th class="reasonCol">理由</th>
+                  <th>通報者</th>
+                  <th>日時</th>
+                  <th>状態</th>
+                  <th>操作</th>
+                </tr>
+              </thead>
+              <tbody id="reportListBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ユーザー管理 -->
+      <section class="card">
+        <h2 class="collapsibleHeader" onclick="toggleSection('userSection')">
+          ユーザー管理 <span class="collapseIcon" id="userSection_icon">▸</span>
+        </h2>
+        <div id="userSection_body" style="display:none;">
+          <input type="text" id="userSearch" class="searchInput" placeholder="メールアドレス・ユーザー名で検索" oninput="renderUserList()">
+          <div class="tableWrap">
+            <table>
+              <thead>
+                <tr>
+                  <th class="sortableTh" onclick="setUserSort('username')">ユーザー名<span class="sortArrow" id="userTh_username"></span></th>
+                  <th class="sortableTh" onclick="setUserSort('email')">メールアドレス<span class="sortArrow" id="userTh_email"></span></th>
+                  <th class="sortableTh" onclick="setUserSort('createdAt')">登録日<span class="sortArrow" id="userTh_createdAt"></span></th>
+                  <th class="sortableTh" onclick="setUserSort('lastSeenAt')">最終閲覧日<span class="sortArrow" id="userTh_lastSeenAt"></span></th>
+                  <th class="sortableTh" onclick="setUserSort('status')">状態<span class="sortArrow" id="userTh_status"></span></th>
+                  <th>操作</th>
+                </tr>
+              </thead>
+              <tbody id="userListBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- 全単語帳一覧 -->
+      <section class="card">
+        <h2 class="collapsibleHeader" onclick="toggleSection('bookSection')">
+          全単語帳一覧 <span class="collapseIcon" id="bookSection_icon">▸</span>
+        </h2>
+        <div id="bookSection_body" style="display:none;">
+          <input type="text" id="bookSearch" class="searchInput" placeholder="タイトル・作成者メールで検索" oninput="renderBookList()">
+          <div class="tableWrap">
+            <table>
+              <thead>
+                <tr>
+                  <th class="sortableTh" onclick="setBookSort('title')">タイトル<span class="sortArrow" id="bookTh_title"></span></th>
+                  <th class="sortableTh" onclick="setBookSort('owner')">作成者<span class="sortArrow" id="bookTh_owner"></span></th>
+                  <th class="sortableTh" onclick="setBookSort('wordCount')">単語数<span class="sortArrow" id="bookTh_wordCount"></span></th>
+                  <th class="sortableTh" onclick="setBookSort('status')">公開状態<span class="sortArrow" id="bookTh_status"></span></th>
+                  <th class="sortableTh" onclick="setBookSort('createdAt')">作成日<span class="sortArrow" id="bookTh_createdAt"></span></th>
+                  <th>操作</th>
+                </tr>
+              </thead>
+              <tbody id="bookListBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    </div>
+
+  </main>
+
+  <!-- ユーザー管理モーダル -->
+  <div id="userModal" class="modalOverlay" style="display:none;">
+    <div class="modalBox">
+      <h3 id="userModalTitle"></h3>
+      <p id="userModalStatus" style="color:var(--color-text-sub);"></p>
+
+      <h4>書き込み制限（単語帳の作成・編集・単語追加を禁止）</h4>
+      <select id="restrictDuration" class="searchInput">
+        <option value="7">1週間</option>
+        <option value="30">1ヶ月</option>
+        <option value="90">3ヶ月</option>
+        <option value="forever">無期限</option>
+      </select>
+      <input type="text" id="restrictReason" class="searchInput" placeholder="理由（任意・本人には表示されません）">
+      <button onclick="applyRestriction()">この内容で制限する</button>
+      <button class="smallActionBtn" onclick="clearRestriction()">制限を解除する</button>
+
+      <h4 style="margin-top:24px;">アカウント凍結（ログイン自体を禁止）</h4>
+      <input type="text" id="freezeReason" class="searchInput" placeholder="理由（任意・本人には表示されません）">
+      <button id="freezeToggleBtn" class="danger" onclick="toggleFreeze()"></button>
+
+      <h4 style="margin-top:24px;">アカウントの削除</h4>
+      <p style="font-size:12px;color:var(--color-text-sub);margin:0 0 8px;">
+        ユーザー情報と、本人が作成した単語帳・単語をすべて完全に削除します。この操作は取り消せません。<br>
+        ※ ログイン用のアカウント自体（メールアドレス・パスワード）はこの画面からは削除できません。詳細は下部の注意書きを参照してください。
+      </p>
+      <button id="deleteUserBtn" class="danger" onclick="deleteUserAccount()">このアカウントを完全に削除する</button>
+
+      <div id="userModalMsg" class="notice"></div>
+
+      <div class="modalActions">
+        <button type="button" class="smallActionBtn" onclick="closeUserModal()">閉じる</button>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <div class="footer-inner">
+      <div class="footertitle"><img src="./images/rogo.png" height="70vh"></div>
+      <div class="footer-links">
+        <a href="index.html">ホーム</a>
+        <a href="list.html">検索</a>
+        <a href="create.html">作成</a>
+        <a href="favorites.html">お気に入り</a>
+        <a href="settings.html">設定</a>
+        <a href="update.html">更新履歴</a>
+        <a href="contact.html">お問い合わせ</a>
+      </div>
+      <div class="copy">© 2026 TEAM-Minimal, Shiratae</div>
+    </div>
+  </footer>
+
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+  <script>
+    // account-widgets.js / analytics.html / usage.html / firestore.rules にも同じ一覧がある。管理者を追加/削除する場合はすべて書き換えること。
+    const ADMIN_EMAILS = [
+      "202301745@edu.nishiyamato.ed.jp",
+      "202305145@edu.nishiyamato.ed.jp"
+    ];
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyD7CJmO3eAO0o2EPRDsVqTtZ_whRd_3-3E",
+      authDomain: "quiz1-4ffdc.firebaseapp.com",
+      projectId: "quiz1-4ffdc",
+      storageBucket: "quiz1-4ffdc.firebasestorage.app",
+      messagingSenderId: "152062126332",
+      appId: "1:152062126332:web:845af237a1a76207214f79"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    let currentUser = null;
+
+    const statusDiv = document.getElementById("status");
+    const loginBtn = document.getElementById("loginBtn");
+    const logoutBtn = document.getElementById("logoutBtn");
+    const settingsBtn = document.getElementById("settingsBtn");
+
+    const savedUser = JSON.parse(localStorage.getItem("cachedUser"));
+    if (savedUser) {
+      settingsBtn.style.display = "inline-block";
+      logoutBtn.style.display = "inline-block";
+      loginBtn.style.display = "none";
+    }
+
+    function goPage(page) {
+      const hasCachedUser = !!localStorage.getItem("cachedUser");
+      if (currentUser || hasCachedUser) {
+        location.href = page;
+      } else {
+        alert("ログインしてください");
+        location.href = "login.html";
+      }
+    }
+
+    function logout() {
+      localStorage.removeItem("cachedUser");
+      auth.signOut();
+    }
+
+    function escapeHtml(str) {
+      return String(str == null ? "" : str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+
+    function toggleSection(id) {
+      const body = document.getElementById(id + "_body");
+      const icon = document.getElementById(id + "_icon");
+      if (!body || !icon) return;
+      const collapsed = body.style.display === "none";
+      body.style.display = collapsed ? "block" : "none";
+      icon.textContent = collapsed ? "▾" : "▸";
+    }
+
+    let usersData = [];   // [{uid, email, username, createdAt, frozen, restrictedUntil, restrictedReason, frozenReason}]
+    let booksData = [];   // [{id, title, owner, isPublic, wordCount, createdAt}]
+    let notifHistory = [];
+    let reportsData = []; // [{id, type, targetId, targetLabel, reason, reportedBy, reportedByEmail, createdAt, status}]
+    let selectedNotifUserIds = new Set();
+    let editingUserUid = null;
+
+    // 列見出しクリックで並び替え（初めてクリックした列は既定の向き、同じ列を再クリックすると上下反転）
+    const USER_SORT_DEFAULT_DIR = { username: "asc", email: "asc", createdAt: "desc", lastSeenAt: "desc", status: "asc" };
+    const BOOK_SORT_DEFAULT_DIR = { title: "asc", owner: "asc", wordCount: "desc", status: "asc", createdAt: "desc" };
+    // ユーザー管理は標準で最終閲覧日の新しい順に並べる
+    let userSortKey = "lastSeenAt";
+    let userSortDir = "desc";
+    let bookSortKey = "createdAt";
+    let bookSortDir = "desc";
+
+    function setUserSort(key) {
+      if (userSortKey === key) {
+        userSortDir = userSortDir === "asc" ? "desc" : "asc";
+      } else {
+        userSortKey = key;
+        userSortDir = USER_SORT_DEFAULT_DIR[key] || "asc";
+      }
+      renderUserList();
+    }
+
+    function setBookSort(key) {
+      if (bookSortKey === key) {
+        bookSortDir = bookSortDir === "asc" ? "desc" : "asc";
+      } else {
+        bookSortKey = key;
+        bookSortDir = BOOK_SORT_DEFAULT_DIR[key] || "asc";
+      }
+      renderBookList();
+    }
+
+    function updateSortHeaders(prefix, activeKey, dir) {
+      const keys = prefix === "user"
+        ? ["username", "email", "createdAt", "lastSeenAt", "status"]
+        : ["title", "owner", "wordCount", "status", "createdAt"];
+      keys.forEach(key => {
+        const el = document.getElementById(prefix + "Th_" + key);
+        if (!el) return;
+        el.textContent = key === activeKey ? (dir === "asc" ? "▲" : "▼") : "";
+      });
+    }
+
+    function handleSignedOut() {
+      // cachedUserはここでは消さない。一時的な認証エラーの度に消してしまうと、
+      // 次に一瞬でもnullが発火した際の再確認猶予(recheck)が効かなくなり、
+      // 些細なネットワーク瞬断でも即座にログアウト扱いになってしまうため。
+      // 明示的なログアウト操作(logout())側でのみ削除する。
+      statusDiv.textContent = "ログアウト中";
+      loginBtn.style.display = "inline-block";
+      logoutBtn.style.display = "none";
+      settingsBtn.style.display = "none";
+      // 通知の入力中や通報対応の作業中に強制的にログイン画面へ飛ばされて
+      // 入力内容や作業が失われることがないよう、ここでは画面遷移はせずヘッダー表示のみ更新する。
+      // （本当に未ログインなら、この後の各操作はFirestoreのルールにより拒否される）
+      // ただし、まだ運営ページの中身を表示する前（初回読み込み中）に未ログインと判明した場合は、
+      // 消えて困る作業内容が無いため「管理者のみアクセス可能」の表示に確定させる。
+      const adminContent = document.getElementById("adminContent");
+      if (!adminContent || adminContent.style.display === "none") {
+        document.getElementById("loadingArea").style.display = "none";
+        document.getElementById("accessDenied").style.display = "block";
+      }
+    }
+
+    /* Firebaseが端末に保存された認証状態を復元し終える前に、onAuthStateChangedが
+       一時的にnullで発火することがある。ログイン中のキャッシュ(cachedUser)が
+       残っている場合は即座にログアウト扱いにせず、少し待ってから本当に
+       未ログインのままかを再確認する（実際はログインしたままなのに強制的に
+       ログイン画面へ飛ばされてしまう不具合を防ぐため）。 */
+    auth.onAuthStateChanged(async (user) => {
+      currentUser = user;
+
+      if (!user) {
+        if (localStorage.getItem("cachedUser")) {
+          (function () {
+            // 端末やネットワークが遅いと1回・1.5秒の再確認だけでは間に合わないことがあるため、
+            // 間隔を広げながら最大4回(合計15秒)まで再確認してから本当に未ログインと判断する。
+            const delays = [1000, 2000, 4000, 8000];
+            const recheck = (i) => {
+              setTimeout(() => {
+                if (auth.currentUser) return;
+                if (i + 1 < delays.length) recheck(i + 1);
+                else {
+                handleSignedOut();
+                if (window.VOCABOOST_SHOW_SESSION_LOST_NOTICE) {
+                  window.VOCABOOST_SHOW_SESSION_LOST_NOTICE(!navigator.onLine);
+                }
+              }
+              }, delays[i]);
+            };
+            recheck(0);
+          })();
+          return;
+        }
+        handleSignedOut();
+        return;
+      }
+
+      localStorage.setItem("cachedUser", JSON.stringify({ uid: user.uid }));
+      statusDiv.textContent = "ログイン中: " + user.uid;
+      loginBtn.style.display = "none";
+      logoutBtn.style.display = "inline-block";
+      settingsBtn.style.display = "inline-block";
+
+      if (!ADMIN_EMAILS.includes(user.email)) {
+        document.getElementById("loadingArea").style.display = "none";
+        document.getElementById("accessDenied").style.display = "block";
+        return;
+      }
+
+      document.getElementById("loadingArea").style.display = "none";
+      document.getElementById("adminContent").style.display = "block";
+
+      await loadUsers();
+      await loadBooks();
+      backfillCohorts();
+      await loadNotifHistory();
+      await loadReports();
+    });
+
+    /* ===================== ユーザー管理 ===================== */
+
+    async function loadUsers() {
+      const snap = await db.collection("users").limit(1000).get();
+      usersData = snap.docs.map(d => ({ uid: d.id, ...d.data() }));
+      usersData.sort((a, b) => {
+        const ta = a.createdAt && a.createdAt.toMillis ? a.createdAt.toMillis() : 0;
+        const tb = b.createdAt && b.createdAt.toMillis ? b.createdAt.toMillis() : 0;
+        return tb - ta;
+      });
+      renderUserList();
+    }
+
+    function getUserStatus(u) {
+      const now = new Date();
+      if (u.frozen === true) {
+        return { label: "凍結中", cls: "badge-danger" };
+      }
+      if (u.restrictedUntil) {
+        const until = u.restrictedUntil.toDate ? u.restrictedUntil.toDate() : new Date(u.restrictedUntil);
+        if (until > now) {
+          const label = until.getFullYear() >= 2900 ? "制限中（無期限）" : `制限中（${until.toLocaleDateString("ja-JP")}まで）`;
+          return { label, cls: "badge-warning" };
+        }
+      }
+      return { label: "通常", cls: "badge-normal" };
+    }
+
+    // 状態でのソート用の優先度（数値が小さいほど上に表示: 凍結中 > 制限中 > 通常）
+    function getUserStatusRank(u) {
+      if (u.frozen === true) return 0;
+      if (u.restrictedUntil) {
+        const until = u.restrictedUntil.toDate ? u.restrictedUntil.toDate() : new Date(u.restrictedUntil);
+        if (until > new Date()) return 1;
+      }
+      return 2;
+    }
+
+    function toMillis(ts) {
+      return ts && ts.toMillis ? ts.toMillis() : 0;
+    }
+
+    function sortUserList(list, sortKey, sortDir) {
+      const sorted = list.slice();
+      const dirMul = sortDir === "asc" ? 1 : -1;
+      switch (sortKey) {
+        case "username":
+          sorted.sort((a, b) => dirMul * (a.username || "").localeCompare(b.username || "", "ja"));
+          break;
+        case "email":
+          sorted.sort((a, b) => dirMul * (a.email || "").localeCompare(b.email || "", "ja"));
+          break;
+        case "lastSeenAt":
+          sorted.sort((a, b) => dirMul * (toMillis(a.lastSeenAt) - toMillis(b.lastSeenAt)));
+          break;
+        case "status":
+          sorted.sort((a, b) => {
+            const rankDiff = dirMul * (getUserStatusRank(a) - getUserStatusRank(b));
+            if (rankDiff !== 0) return rankDiff;
+            return toMillis(b.createdAt) - toMillis(a.createdAt);
+          });
+          break;
+        case "createdAt":
+        default:
+          sorted.sort((a, b) => dirMul * (toMillis(a.createdAt) - toMillis(b.createdAt)));
+          break;
+      }
+      return sorted;
+    }
+
+    function renderUserList() {
+      const q = document.getElementById("userSearch").value.trim().toLowerCase();
+      updateSortHeaders("user", userSortKey, userSortDir);
+      const body = document.getElementById("userListBody");
+
+      const filtered = sortUserList(usersData.filter(u => {
+        if (!q) return true;
+        return (u.email || "").toLowerCase().includes(q) || (u.username || "").toLowerCase().includes(q);
+      }), userSortKey, userSortDir);
+
+      if (filtered.length === 0) {
+        body.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--color-text-sub);">該当するユーザーがいません</td></tr>`;
+        return;
+      }
+
+      body.innerHTML = filtered.map(u => {
+        const status = getUserStatus(u);
+        const created = u.createdAt && u.createdAt.toDate ? u.createdAt.toDate().toLocaleDateString("ja-JP") : "-";
+        const lastSeen = u.lastSeenAt && u.lastSeenAt.toDate ? u.lastSeenAt.toDate().toLocaleString("ja-JP") : "-";
+        return `
+          <tr>
+            <td>${escapeHtml(u.username || "(未設定)")}</td>
+            <td>${escapeHtml(u.email || "-")}</td>
+            <td>${created}</td>
+            <td>${lastSeen}</td>
+            <td><span class="badge ${status.cls}">${status.label}</span></td>
+            <td><div class="actionCell">
+              <a class="smallActionBtn" href="user.html?id=${encodeURIComponent(u.uid)}" target="_blank" rel="noopener">開く</a>
+              <button class="smallActionBtn" onclick="openUserModal('${u.uid}')">管理</button>
+            </div></td>
+          </tr>
+        `;
+      }).join("");
+    }
+
+    function openUserModal(uid) {
+      const u = usersData.find(x => x.uid === uid);
+      if (!u) return;
+      editingUserUid = uid;
+
+      document.getElementById("userModalTitle").textContent = u.username || u.email || uid;
+      const status = getUserStatus(u);
+      document.getElementById("userModalStatus").textContent = "現在の状態: " + status.label + "（" + (u.email || "-") + "）";
+      document.getElementById("restrictReason").value = u.restrictedReason || "";
+      document.getElementById("freezeReason").value = u.frozenReason || "";
+
+      const freezeBtn = document.getElementById("freezeToggleBtn");
+      freezeBtn.textContent = u.frozen === true ? "凍結を解除する" : "このアカウントを凍結する";
+
+      document.getElementById("deleteUserBtn").disabled = false;
+
+      document.getElementById("userModalMsg").textContent = "";
+      document.getElementById("userModal").style.display = "flex";
+    }
+
+    function closeUserModal() {
+      document.getElementById("userModal").style.display = "none";
+      editingUserUid = null;
+    }
+
+    async function applyRestriction() {
+      if (!editingUserUid) return;
+      const duration = document.getElementById("restrictDuration").value;
+      const reason = document.getElementById("restrictReason").value.trim();
+      const msg = document.getElementById("userModalMsg");
+
+      let until;
+      if (duration === "forever") {
+        until = new Date(9999, 0, 1);
+      } else {
+        const days = parseInt(duration, 10);
+        until = new Date(Date.now() + days * 24 * 60 * 60 * 1000);
+      }
+
+      try {
+        await db.collection("users").doc(editingUserUid).update({
+          restrictedUntil: firebase.firestore.Timestamp.fromDate(until),
+          restrictedReason: reason,
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        msg.className = "success";
+        msg.textContent = "制限を適用しました";
+        await loadUsers();
+        openUserModal(editingUserUid);
+      } catch (e) {
+        console.error(e);
+        msg.className = "notice";
+        msg.textContent = "適用に失敗しました";
+      }
+    }
+
+    async function clearRestriction() {
+      if (!editingUserUid) return;
+      const msg = document.getElementById("userModalMsg");
+      try {
+        await db.collection("users").doc(editingUserUid).update({
+          restrictedUntil: null,
+          restrictedReason: "",
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        msg.className = "success";
+        msg.textContent = "制限を解除しました";
+        document.getElementById("restrictReason").value = "";
+        await loadUsers();
+        openUserModal(editingUserUid);
+      } catch (e) {
+        console.error(e);
+        msg.className = "notice";
+        msg.textContent = "解除に失敗しました";
+      }
+    }
+
+    async function toggleFreeze() {
+      if (!editingUserUid) return;
+      const u = usersData.find(x => x.uid === editingUserUid);
+      if (!u) return;
+      const msg = document.getElementById("userModalMsg");
+      const nextFrozen = !(u.frozen === true);
+      const reason = document.getElementById("freezeReason").value.trim();
+
+      if (nextFrozen && !confirm("このアカウントを凍結しますか？次回ログイン時に強制的にログアウトされ、利用できなくなります。")) {
+        return;
+      }
+
+      try {
+        await db.collection("users").doc(editingUserUid).update({
+          frozen: nextFrozen,
+          frozenReason: reason,
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        msg.className = "success";
+        msg.textContent = nextFrozen ? "凍結しました" : "凍結を解除しました";
+        await loadUsers();
+        openUserModal(editingUserUid);
+      } catch (e) {
+        console.error(e);
+        msg.className = "notice";
+        msg.textContent = "更新に失敗しました";
+      }
+    }
+
+    // 単語帳1件を、中の単語もろとも完全に削除する（単語数がFirestoreのバッチ上限(500)を
+    // 超える場合に備えて分割コミットする）
+    async function deleteBookCascade(bookId) {
+      const wordsSnap = await db.collection("wordbooks").doc(bookId).collection("words").get();
+      const BATCH_LIMIT = 450;
+      let batch = db.batch();
+      let opCount = 0;
+
+      for (const wDoc of wordsSnap.docs) {
+        batch.delete(wDoc.ref);
+        opCount++;
+        if (opCount >= BATCH_LIMIT) {
+          await batch.commit();
+          batch = db.batch();
+          opCount = 0;
+        }
+      }
+
+      batch.delete(db.collection("wordbooks").doc(bookId));
+      opCount++;
+      await batch.commit();
+    }
+
+    async function deleteUserAccount() {
+      if (!editingUserUid) return;
+      const u = usersData.find(x => x.uid === editingUserUid);
+      if (!u) return;
+      const msg = document.getElementById("userModalMsg");
+      const ownedBooks = booksData.filter(b => b.owner === editingUserUid);
+
+      const confirmed = confirm(
+        `本当に「${u.email || u.username || editingUserUid}」のアカウントを削除しますか？\n` +
+        `作成した単語帳 ${ownedBooks.length} 件と、中の単語もすべて完全に削除されます。\n` +
+        `この操作は取り消せません。`
+      );
+      if (!confirmed) return;
+
+      const deleteBtn = document.getElementById("deleteUserBtn");
+      deleteBtn.disabled = true;
+      msg.className = "notice";
+      msg.textContent = "削除しています...";
+
+      try {
+        // 画面に読み込んだ一覧(最新1000件まで)ではなく、所有者で直接検索して漏れなく削除する
+        const ownedSnap = await db.collection("wordbooks").where("owner", "==", editingUserUid).get();
+        for (const doc of ownedSnap.docs) {
+          await deleteBookCascade(doc.id);
+        }
+
+        await db.collection("users").doc(editingUserUid).delete();
+
+        alert("アカウントを削除しました");
+        closeUserModal();
+        await loadUsers();
+        await loadBooks();
+      } catch (e) {
+        console.error(e);
+        deleteBtn.disabled = false;
+        msg.className = "notice";
+        msg.textContent = "削除に失敗しました: " + e.message;
+      }
+    }
+
+    /* ===================== 期(学年タグ)の一括付与 =====================
+       各ユーザーは自分のログイン時に期が付与されるが、しばらくログインしていない
+       過去のアカウントにも付与されるよう、運営ページを開いた際に未付与・不一致の
+       users.cohort と wordbooks.ownerCohort をまとめて補完する（管理者は両方を更新可能）。 */
+    async function backfillCohorts() {
+      // 期(学年タグ)に加えて、検索ページ(list.html)で使う検索用キー(searchKeys)と
+      // ユーザーの作成した単語帳数(bookCount)も、未付与・不一致のものをまとめて補完する。
+      // （検索ページは全件を読み込まずにFirestoreのクエリで絞り込むため、これらのフィールドが必要）
+      try {
+        const keysOf = window.VOCABOOST_SEARCH_KEYS;
+        const same = window.VOCABOOST_SAME_SEARCH_KEYS;
+        const patches = new Map(); // path -> [ref, patch]
+        const addPatch = (ref, field, value) => {
+          if (!patches.has(ref.path)) patches.set(ref.path, [ref, {}]);
+          patches.get(ref.path)[1][field] = value;
+        };
+
+        // 読み込んだ単語帳が上限(1000件)に達していない＝全件読めているときだけ単語帳数を補完する
+        const bookCountByOwner = new Map();
+        const booksComplete = booksData.length < 1000;
+        booksData.forEach(b => bookCountByOwner.set(b.owner, (bookCountByOwner.get(b.owner) || 0) + 1));
+
+        const cohortByUid = new Map();
+        usersData.forEach(u => {
+          const ref = db.collection("users").doc(u.uid);
+          const cohort = window.VOCABOOST_COHORT_FROM_EMAIL(u.email);
+          if (!u.email && u.cohort !== undefined) {
+            cohortByUid.set(u.uid, u.cohort);
+          } else {
+            cohortByUid.set(u.uid, cohort);
+            if (u.cohort !== cohort) { addPatch(ref, "cohort", cohort); u.cohort = cohort; }
+          }
+          if (keysOf) {
+            const keys = keysOf(u.username || "");
+            if (!same(u.searchKeys, keys)) { addPatch(ref, "searchKeys", keys); u.searchKeys = keys; }
+          }
+          if (booksComplete) {
+            const count = bookCountByOwner.get(u.uid) || 0;
+            if (u.bookCount !== count) { addPatch(ref, "bookCount", count); u.bookCount = count; }
+          }
+        });
+        booksData.forEach(b => {
+          const ref = db.collection("wordbooks").doc(b.id);
+          if (cohortByUid.has(b.owner)) {
+            const cohort = cohortByUid.get(b.owner);
+            if (b.ownerCohort !== cohort) { addPatch(ref, "ownerCohort", cohort); b.ownerCohort = cohort; }
+          }
+          if (keysOf) {
+            const keys = keysOf(b.title || "");
+            if (!same(b.searchKeys, keys)) { addPatch(ref, "searchKeys", keys); b.searchKeys = keys; }
+          }
+        });
+
+        const writes = Array.from(patches.values());
+        for (let i = 0; i < writes.length; i += 400) {
+          const batch = db.batch();
+          writes.slice(i, i + 400).forEach(([ref, data]) => batch.update(ref, data));
+          await batch.commit();
+        }
+        if (writes.length > 0) {
+          console.log(`期・検索用キー・単語帳数を${writes.length}件補完しました`);
+        }
+      } catch (e) {
+        console.error("期・検索用キー等の一括付与に失敗しました", e);
+      }
+    }
+
+    /* ===================== 全単語帳一覧 ===================== */
+
+    async function loadBooks() {
+      const snap = await db.collection("wordbooks").orderBy("createdAt", "desc").limit(1000).get();
+      booksData = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      renderBookList();
+    }
+
+    // 公開状態でのソート用の優先度（数値が小さいほど上に表示: 強制非公開 > 非公開 > 公開）
+    function getBookStatusRank(b) {
+      if (b.forcedPrivate === true) return 0;
+      if (b.isPublic === false) return 1;
+      return 2;
+    }
+
+    function bookOwnerLabel(b, userMap) {
+      const owner = userMap.get(b.owner);
+      return owner ? (owner.username || b.ownerName || b.owner || "") : (b.ownerName || b.owner || "");
+    }
+
+    function sortBookList(list, sortKey, sortDir, userMap) {
+      const sorted = list.slice();
+      const dirMul = sortDir === "asc" ? 1 : -1;
+      switch (sortKey) {
+        case "title":
+          sorted.sort((a, b) => dirMul * (a.title || "").localeCompare(b.title || "", "ja"));
+          break;
+        case "owner":
+          sorted.sort((a, b) => dirMul * bookOwnerLabel(a, userMap).localeCompare(bookOwnerLabel(b, userMap), "ja"));
+          break;
+        case "wordCount":
+          sorted.sort((a, b) => dirMul * ((a.wordCount ?? 0) - (b.wordCount ?? 0)));
+          break;
+        case "status":
+          sorted.sort((a, b) => {
+            const rankDiff = dirMul * (getBookStatusRank(a) - getBookStatusRank(b));
+            if (rankDiff !== 0) return rankDiff;
+            return toMillis(b.createdAt) - toMillis(a.createdAt);
+          });
+          break;
+        case "createdAt":
+        default:
+          sorted.sort((a, b) => dirMul * (toMillis(a.createdAt) - toMillis(b.createdAt)));
+          break;
+      }
+      return sorted;
+    }
+
+    function renderBookList() {
+      const q = document.getElementById("bookSearch").value.trim().toLowerCase();
+      updateSortHeaders("book", bookSortKey, bookSortDir);
+      const body = document.getElementById("bookListBody");
+
+      const userMap = new Map(usersData.map(u => [u.uid, u]));
+
+      const filtered = sortBookList(booksData.filter(b => {
+        if (!q) return true;
+        const owner = userMap.get(b.owner);
+        const ownerEmail = owner ? (owner.email || "") : "";
+        return (b.title || "").toLowerCase().includes(q) || ownerEmail.toLowerCase().includes(q);
+      }), bookSortKey, bookSortDir, userMap);
+
+      if (filtered.length === 0) {
+        body.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--color-text-sub);">該当する単語帳がありません</td></tr>`;
+        return;
+      }
+
+      body.innerHTML = filtered.map(b => {
+        const owner = userMap.get(b.owner);
+        const ownerLabel = owner ? (owner.username || b.ownerName || b.owner) : (b.ownerName || b.owner || "(不明)");
+        const created = b.createdAt && b.createdAt.toDate ? b.createdAt.toDate().toLocaleDateString("ja-JP") : "-";
+        const isForcedPrivate = b.forcedPrivate === true;
+        const publicLabel = isForcedPrivate
+          ? '<span class="badge badge-danger">強制非公開</span>'
+          : (b.isPublic === false
+            ? '<span class="badge badge-normal">非公開</span>'
+            : '<span class="badge badge-warning">公開</span>');
+        return `
+          <tr>
+            <td>${escapeHtml(b.title || "(無題)")}</td>
+            <td>${escapeHtml(ownerLabel)}</td>
+            <td class="num">${b.wordCount ?? 0}</td>
+            <td>${publicLabel}</td>
+            <td>${created}</td>
+            <td><div class="actionCell">
+              ${bookOpenLinkHtml(b.id)}
+              ${forcedPrivateButtonHtml(b.id, isForcedPrivate)}
+            </div></td>
+          </tr>
+        `;
+      }).join("");
+    }
+
+    function bookOpenLinkHtml(bookId) {
+      return `<a class="smallActionBtn" href="view.html?id=${encodeURIComponent(bookId)}" target="_blank" rel="noopener">開く</a>`;
+    }
+
+    function forcedPrivateButtonHtml(bookId, isForcedPrivate) {
+      return `<button class="smallActionBtn" onclick="toggleForcedPrivate('${bookId}')">${isForcedPrivate ? "解除" : "非公開"}</button>`;
+    }
+
+    async function toggleForcedPrivate(bookId) {
+      const book = booksData.find(b => b.id === bookId);
+      if (!book) return;
+
+      const nextForced = !(book.forcedPrivate === true);
+
+      const confirmed = nextForced
+        ? confirm(`「${book.title || "(無題)"}」を強制的に非公開にしますか？\n作成者はこの単語帳を自分で公開に戻せなくなります。`)
+        : confirm(`「${book.title || "(無題)"}」の強制非公開を解除しますか？\n作成者が再び公開できるようになります。`);
+      if (!confirmed) return;
+
+      try {
+        const patch = {
+          forcedPrivate: nextForced,
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        };
+        if (nextForced) {
+          patch.isPublic = false;
+        }
+        await db.collection("wordbooks").doc(bookId).update(patch);
+        await loadBooks();
+        renderReportList();
+      } catch (e) {
+        console.error(e);
+        alert("更新に失敗しました: " + e.message);
+      }
+    }
+
+    /* ===================== 通報一覧 ===================== */
+
+    async function loadReports() {
+      const snap = await db.collection("reports").orderBy("createdAt", "desc").limit(200).get();
+      reportsData = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      renderReportList();
+    }
+
+    // 通報者はメールアドレスではなくユーザー名で表示する（見つからない場合のみメール等で代用）
+    function reporterLabel(r) {
+      const reporter = usersData.find(u => u.uid === r.reportedBy);
+      if (reporter && reporter.username) return reporter.username;
+      return r.reportedByEmail || r.reportedBy || "";
+    }
+
+    function renderReportList() {
+      const q = document.getElementById("reportSearch").value.trim().toLowerCase();
+      const body = document.getElementById("reportListBody");
+
+      const filtered = reportsData.filter(r => {
+        if (!q) return true;
+        return (r.reason || "").toLowerCase().includes(q) ||
+          (r.targetLabel || "").toLowerCase().includes(q) ||
+          reporterLabel(r).toLowerCase().includes(q);
+      });
+
+      if (filtered.length === 0) {
+        body.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--color-text-sub);">通報はありません</td></tr>`;
+        return;
+      }
+
+      body.innerHTML = filtered.map(r => {
+        const typeLabel = r.type === "wordbook" ? "単語帳" : "ユーザー";
+        const created = r.createdAt && r.createdAt.toDate ? r.createdAt.toDate().toLocaleString("ja-JP") : "-";
+        const isResolved = r.status === "resolved";
+        const statusBadge = isResolved
+          ? '<span class="badge badge-normal">対応済み</span>'
+          : '<span class="badge badge-warning">未対応</span>';
+
+        const targetCell = escapeHtml(r.targetLabel || r.targetId || "");
+
+        const actions = [`<button class="smallActionBtn" onclick="toggleReportStatus('${r.id}')">${isResolved ? "未対応に戻す" : "対応済みにする"}</button>`];
+        if (r.type === "user") {
+          actions.push(`<button class="smallActionBtn" onclick="openUserModal('${r.targetId}')">管理</button>`);
+        } else {
+          const book = booksData.find(b => b.id === r.targetId);
+          const isForcedPrivate = !!book && book.forcedPrivate === true;
+          actions.push(bookOpenLinkHtml(r.targetId));
+          actions.push(forcedPrivateButtonHtml(r.targetId, isForcedPrivate));
+        }
+
+        return `
+          <tr>
+            <td>${typeLabel}</td>
+            <td>${targetCell}</td>
+            <td class="reasonCell">${escapeHtml(r.reason || "")}</td>
+            <td>${escapeHtml(reporterLabel(r))}</td>
+            <td>${created}</td>
+            <td>${statusBadge}</td>
+            <td><div class="actionCell">${actions.join("")}</div></td>
+          </tr>
+        `;
+      }).join("");
+    }
+
+    async function toggleReportStatus(reportId) {
+      const report = reportsData.find(r => r.id === reportId);
+      if (!report) return;
+      const nextResolved = !(report.status === "resolved");
+
+      try {
+        await db.collection("reports").doc(reportId).update({
+          status: nextResolved ? "resolved" : "open",
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        await loadReports();
+      } catch (e) {
+        console.error(e);
+        alert("更新に失敗しました: " + e.message);
+      }
+    }
+
+    /* ===================== 通知送信 ===================== */
+
+    function onNotifTargetChange() {
+      const target = document.querySelector('input[name="notifTarget"]:checked').value;
+      document.getElementById("notifUserPicker").style.display = target === "users" ? "block" : "none";
+      if (target === "users") renderNotifUserPicker();
+    }
+
+    function renderNotifUserPicker() {
+      const q = document.getElementById("notifUserSearch").value.trim().toLowerCase();
+      const listEl = document.getElementById("notifUserPickerList");
+
+      const filtered = usersData.filter(u => {
+        if (!q) return true;
+        return (u.email || "").toLowerCase().includes(q) || (u.username || "").toLowerCase().includes(q);
+      });
+
+      if (filtered.length === 0) {
+        listEl.innerHTML = `<div style="padding:14px;text-align:center;color:var(--color-text-sub);">該当するユーザーがいません</div>`;
+      } else {
+        listEl.innerHTML = filtered.map(u => `
+          <label class="userPickRow">
+            <input type="checkbox" class="notifUserCheck" data-uid="${u.uid}" ${selectedNotifUserIds.has(u.uid) ? "checked" : ""}>
+            <span>${escapeHtml(u.username || "(未設定)")}（${escapeHtml(u.email || "-")}）</span>
+          </label>
+        `).join("");
+        listEl.querySelectorAll(".notifUserCheck").forEach(cb => {
+          cb.addEventListener("change", () => {
+            if (cb.checked) selectedNotifUserIds.add(cb.dataset.uid);
+            else selectedNotifUserIds.delete(cb.dataset.uid);
+            updateNotifSelectedCount();
+          });
+        });
+      }
+      updateNotifSelectedCount();
+    }
+
+    function updateNotifSelectedCount() {
+      document.getElementById("notifSelectedCount").textContent =
+        selectedNotifUserIds.size + "人を選択中";
+    }
+
+    async function sendNotification() {
+      const title = document.getElementById("notifTitle").value.trim();
+      const body = document.getElementById("notifBody").value.trim();
+      const target = document.querySelector('input[name="notifTarget"]:checked').value;
+      const msg = document.getElementById("notifMsg");
+
+      if (!title || !body) {
+        msg.className = "notice";
+        msg.textContent = "タイトルと本文を入力してください";
+        return;
+      }
+
+      if (target === "users" && selectedNotifUserIds.size === 0) {
+        msg.className = "notice";
+        msg.textContent = "送信先のユーザーを1人以上選択してください";
+        return;
+      }
+
+      msg.className = "notice";
+      msg.textContent = "送信しています...";
+
+      try {
+        await db.collection("notifications").add({
+          title: title,
+          body: body,
+          target: target,
+          targetUserIds: target === "users" ? Array.from(selectedNotifUserIds) : [],
+          createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+          createdBy: currentUser.uid
+        });
+      } catch (e) {
+        console.error(e);
+        msg.className = "notice";
+        msg.textContent = "送信に失敗しました: " + e.message;
+        return;
+      }
+
+      // 送信自体は成功しているので、ここから先（履歴の再読み込み）が失敗しても
+      // 「送信に失敗しました」という誤った表示にはしない
+      msg.className = "success";
+      msg.textContent = "送信しました";
+      document.getElementById("notifTitle").value = "";
+      document.getElementById("notifBody").value = "";
+      selectedNotifUserIds.clear();
+      renderNotifUserPicker();
+      await loadNotifHistory();
+    }
+
+    // follow(フォロー)・favorite_book(お気に入り)・follow_new_book等、ユーザー操作から
+    // 自動生成される通知が増えたため、この履歴は運営がこのページから送信した
+    // (target=="all"または"users")ものだけに絞り込む。
+    async function loadNotifHistory() {
+      let snap;
+      try {
+        snap = await db.collection("notifications")
+          .where("target", "in", ["all", "users"])
+          .orderBy("createdAt", "desc")
+          .limit(50)
+          .get();
+      } catch (e) {
+        console.warn("orderBy付きクエリに失敗。インデックス無しクエリにフォールバックします。", e);
+        try {
+          snap = await db.collection("notifications")
+            .where("target", "in", ["all", "users"])
+            .get();
+        } catch (e2) {
+          console.error("failed to load notification history", e2);
+          document.getElementById("notifHistoryBody").innerHTML =
+            `<tr><td colspan="3" style="text-align:center;color:var(--color-text-sub);">送信履歴の読み込みに失敗しました</td></tr>`;
+          return;
+        }
+      }
+      notifHistory = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+        .sort((a, b) => toMillis(b.createdAt) - toMillis(a.createdAt))
+        .slice(0, 50);
+      renderNotifHistory();
+    }
+
+    function renderNotifHistory() {
+      const body = document.getElementById("notifHistoryBody");
+      if (notifHistory.length === 0) {
+        body.innerHTML = `<tr><td colspan="3" style="text-align:center;color:var(--color-text-sub);">送信履歴はありません</td></tr>`;
+        return;
+      }
+      body.innerHTML = notifHistory.map(n => {
+        const sentAt = n.createdAt && n.createdAt.toDate ? n.createdAt.toDate().toLocaleString("ja-JP") : "-";
+        const targetLabel = n.target === "all" ? "全ユーザー" : `${(n.targetUserIds || []).length}人`;
+        return `
+          <tr>
+            <td>${escapeHtml(n.title || "")}</td>
+            <td>${escapeHtml(targetLabel)}</td>
+            <td>${sentAt}</td>
+          </tr>
+        `;
+      }).join("");
+    }
+  </script>
+
+  <script src="account-widgets.js?v=20260930"></script>
+</body>
+
+</html>

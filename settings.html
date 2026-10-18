@@ -1,0 +1,835 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, user-scalable=yes">
+  <title>設定</title>
+  <link rel="apple-touch-icon" sizes="512x512" href="./images/icon.png">
+  <link rel="icon" type="image/x-icon" href="./images/favicon.ico">
+  <link rel="stylesheet" type="text/css" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <script src="theme.js"></script>
+
+  <style>
+    body {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .card {
+      background: var(--color-surface);
+      color: var(--color-text);
+      padding: 25px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+
+    .card h2 {
+      margin-top: 0;
+    }
+
+    input {
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid var(--color-border);
+      width: 90%;
+      margin-top: 8px;
+    }
+
+    .profileEditNote {
+      font-size: 13px;
+      color: var(--color-text-sub);
+    }
+
+    .notice {
+      color: var(--color-danger);
+    }
+
+    .success {
+      color: var(--color-success);
+    }
+
+    /* ===== 表示設定（フォント・ダークモード） ===== */
+    .font-item-preview-pending {
+      font-size: 12px !important;
+      color: var(--color-text-sub);
+    }
+
+    .option-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px 4px;
+      border-bottom: 1px solid var(--color-border);
+      text-align: left;
+    }
+
+    .option-row:last-child {
+      border-bottom: none;
+    }
+
+    .option-row-clickable {
+      cursor: pointer;
+      user-select: none;
+      transition: background-color .15s;
+      margin: 0 -10px;
+      padding: 14px 10px;
+      border-radius: 8px;
+    }
+
+    .option-row-clickable:hover {
+      background-color: var(--color-bg);
+    }
+
+    .option-row .option-label {
+      font-weight: bold;
+    }
+
+    .theme-select {
+      flex-shrink: 0;
+      margin-left: 12px;
+      padding: 8px 10px;
+      border: 1px solid var(--color-border);
+      border-radius: 8px;
+      background: var(--color-surface);
+      color: var(--color-text);
+      font-size: 14px;
+      font-family: inherit;
+    }
+
+    .option-row .option-desc {
+      font-size: 12px;
+      color: var(--color-text-sub);
+      font-weight: normal;
+      margin-top: 2px;
+    }
+
+    /* フォント選択：検索ボックス */
+    .font-search {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 10px 14px;
+      border: 1px solid var(--color-border);
+      border-radius: 10px;
+      background: var(--color-surface);
+      color: var(--color-text);
+      font-size: 14px;
+      margin-top: 10px;
+    }
+
+    /* フォント選択：リスト */
+    .font-list {
+      margin-top: 10px;
+      max-height: 320px;
+      overflow-y: auto;
+      border: 1px solid var(--color-border);
+      border-radius: 10px;
+    }
+
+    .font-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--color-border);
+      cursor: pointer;
+      transition: background-color .15s;
+    }
+
+    .font-item:last-child {
+      border-bottom: none;
+    }
+
+    .font-item:hover {
+      background: var(--color-bg);
+    }
+
+    .font-item.active {
+      background: var(--color-accent);
+    }
+
+    .font-item.active .font-item-label,
+    .font-item.active .font-item-category {
+      color: var(--color-accent-text);
+    }
+
+    .font-item-main {
+      min-width: 0;
+      flex: 1;
+    }
+
+    .font-item-label {
+      font-size: 15px;
+      color: var(--color-text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .font-item-category {
+      font-size: 12px;
+      color: var(--color-text-sub);
+      margin-top: 2px;
+    }
+
+    .font-item-preview {
+      font-size: 18px;
+      color: var(--color-text);
+      flex-shrink: 0;
+    }
+
+    .font-item.active .font-item-preview {
+      color: var(--color-accent-text);
+    }
+
+    .font-list-empty {
+      padding: 20px;
+      text-align: center;
+      color: var(--color-text-sub);
+      font-size: 14px;
+    }
+
+    /* ダークモード：トグルスイッチ */
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 50px;
+      height: 28px;
+      flex-shrink: 0;
+    }
+
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .switch-track {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      left: 0;
+      background-color: var(--color-border);
+      border-radius: 28px;
+      transition: .2s;
+    }
+
+    .switch-track::before {
+      content: "";
+      position: absolute;
+      width: 22px;
+      height: 22px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      border-radius: 50%;
+      transition: .2s;
+    }
+
+    .switch input:checked + .switch-track {
+      background-color: var(--color-accent);
+    }
+
+    .switch input:checked + .switch-track::before {
+      transform: translateX(22px);
+    }
+
+    .cacheDesc {
+      font-size: 13px;
+      color: var(--color-text-sub);
+      margin: 6px auto;
+      max-width: 520px;
+      line-height: 1.6;
+    }
+
+    .cacheUsage {
+      font-size: 13px;
+      color: var(--color-text-sub);
+      min-height: 1.2em;
+    }
+  </style>
+</head>
+
+<body>
+
+  <header>
+    <p class="headertitle"><a href="index.html"><img src="./images/rogo.png" height="70vh"></a></p>
+    <div id="status" style="display:none">ログイン確認中...</div>
+    <div>
+      <span id="notifBellContainer"></span>
+      <button id="settingsBtn" class="header-btn" style="display:none" onclick="goPage('settings.html')">設定</button>
+      <button id="loginBtn" class="header-btn" onclick="location.href='login.html'">ログイン</button>
+      <button id="logoutBtn" class="header-btn" style="display:none" onclick="logout()">ログアウト</button>
+    </div>
+  </header>
+
+  <main>
+
+    <div class="card">
+      <h2>ユーザー情報</h2>
+      <p>UID: <span id="uid"></span></p>
+      <p>Email: <span id="email"></span></p>
+      <p>ユーザー名: <span id="usernameText">未設定</span></p>
+      <p>作成した単語帳数: <span id="bookCount">0</span></p>
+      <p class="profileEditNote">プロフィール写真・ユーザー名・自己紹介は<a id="profilePageLink" href="#">プロフィールページ</a>の鉛筆マークから編集できます</p>
+    </div>
+
+    <div class="card">
+      <h2>パスワード変更</h2>
+      <form autocomplete="off" onsubmit="return false;">
+        <input type="password" id="currentPass" name="vocaboost_current_pass" placeholder="現在のパスワード" autocomplete="off">
+        <input type="password" id="newPass" name="vocaboost_new_pass" placeholder="新しいパスワード" autocomplete="new-password">
+        <input type="password" id="newPassConfirm" name="vocaboost_new_pass_confirm" placeholder="新しいパスワード（確認）" autocomplete="new-password">
+        <button type="button" onclick="changePassword()">変更する</button>
+      </form>
+      <div id="passMsg" class="notice"></div>
+    </div>
+
+    <div class="card">
+      <h2>表示設定</h2>
+
+      <div class="option-row" style="display:block;">
+        <div class="option-label">フォント</div>
+        <div class="option-desc">サイト全体の文字フォントを変更します（Google Fontsの日本語対応フォントから選べます）</div>
+
+        <input
+          type="text"
+          id="fontSearch"
+          class="font-search"
+          placeholder="フォント名やカテゴリで検索（例：明朝、丸ゴシック、Noto）"
+          autocomplete="off"
+        >
+
+        <div class="font-list" id="fontList"></div>
+      </div>
+
+      <div class="option-row">
+        <div>
+          <div class="option-label">ダークモード</div>
+          <div class="option-desc">画面全体の配色を選びます。「端末の設定に合わせる」では、端末のダークモードに合わせて自動で切り替わります</div>
+        </div>
+        <select id="themeModeSelect" class="theme-select">
+          <option value="system">端末の設定に合わせる</option>
+          <option value="light">ライト</option>
+          <option value="dark">ダーク</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>キャッシュの削除</h2>
+      <p class="cacheDesc">表示を速くするために端末に保存しているデータ（単語帳・一覧などの一時的な保存）を削除します。表示がおかしいときや、端末の保存容量がいっぱいのときにお試しください。</p>
+      <p class="cacheDesc">オフラインに保存した単語帳、ログイン状態、表示設定、学習の記録（テストの正解済み・暗記の「覚えた」）は削除されません。</p>
+      <p class="cacheUsage" id="cacheUsage"></p>
+      <button type="button" id="clearCacheBtn" onclick="clearSiteCache()">キャッシュを削除する</button>
+      <div id="cacheMsg" class="notice"></div>
+    </div>
+
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+      <div><img src="./images/rogo.png" height="70vh"></div>
+      <div class="footer-links">
+        <a href="index.html">ホーム</a>
+        <a href="list.html">検索</a>
+        <a href="create.html">作成</a>
+        <a href="favorites.html">お気に入り</a>
+        <a href="settings.html">設定</a>
+        <a href="update.html">更新履歴</a>
+        <a href="contact.html">お問い合わせ</a>
+      </div>
+      <div class="copy">© 2026 TEAM-Minimal, Shiratae</div>
+    </div>
+  </footer>
+
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+  <script>
+    /* ===== Firebase設定（完全版） ===== */
+    const firebaseConfig = {
+      apiKey: "AIzaSyD7CJmO3eAO0o2EPRDsVqTtZ_whRd_3-3E",
+      authDomain: "quiz1-4ffdc.firebaseapp.com",
+      projectId: "quiz1-4ffdc",
+      storageBucket: "quiz1-4ffdc.firebasestorage.app",
+      messagingSenderId: "152062126332",
+      appId: "1:152062126332:web:845af237a1a76207214f79"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+    let currentUser = null;
+
+    const statusDiv = document.getElementById("status");
+    const loginBtn = document.getElementById("loginBtn");
+    const logoutBtn = document.getElementById("logoutBtn");
+    const settingsBtn = document.getElementById("settingsBtn");
+
+    const uidSpan = document.getElementById("uid");
+    const emailSpan = document.getElementById("email");
+    const usernameTextSpan = document.getElementById("usernameText");
+    const bookCountSpan = document.getElementById("bookCount");
+    const profilePageLink = document.getElementById("profilePageLink");
+
+    // ログイン情報のキャッシュを利用してヘッダーを即時表示
+    const savedUser =
+      JSON.parse(localStorage.getItem("cachedUser"));
+
+    if (savedUser) {
+      settingsBtn.style.display = "inline-block";
+      logoutBtn.style.display = "inline-block";
+      loginBtn.style.display = "none";
+    }
+
+    // ユーザー情報（UID・Email・ユーザー名・単語帳数）のキャッシュを利用して即時表示する。
+    // Firebaseの認証確認(非同期)が完了するまで欄が空白のままになるのを防ぐ。
+    const PROFILE_CACHE_KEY = "settingsProfileCache";
+    const cachedProfile = JSON.parse(localStorage.getItem(PROFILE_CACHE_KEY) || "null");
+
+    if (cachedProfile) {
+      uidSpan.textContent = cachedProfile.uid || "";
+      if (cachedProfile.uid) profilePageLink.href = "user.html?id=" + encodeURIComponent(cachedProfile.uid);
+      emailSpan.textContent = cachedProfile.email || "";
+      usernameTextSpan.textContent = cachedProfile.username || "未設定";
+      bookCountSpan.textContent = cachedProfile.bookCount ?? 0;
+    }
+
+    function saveProfileCache(partial) {
+      const current = JSON.parse(localStorage.getItem(PROFILE_CACHE_KEY) || "null") || {};
+      const updated = { ...current, ...partial };
+      localStorage.setItem(PROFILE_CACHE_KEY, JSON.stringify(updated));
+    }
+
+    function handleSignedOut() {
+      // cachedUserは明示的なログアウト操作(logout())でのみ削除する
+      // (ここで消すと、次に一時的にnullが発火した際の再確認猶予が効かなくなるため)
+      localStorage.removeItem(PROFILE_CACHE_KEY);
+      loginBtn.style.display = "inline-block";
+      logoutBtn.style.display = "none";
+      settingsBtn.style.display = "none";
+      // プロフィール編集中に強制的にログイン画面へ飛ばされて入力内容が
+      // 失われることがないよう、ここでは画面遷移はせずヘッダー表示のみ更新する。
+    }
+
+    /* ===== ログインチェック =====
+       Firebaseが端末に保存された認証状態を復元し終える前に、
+       onAuthStateChangedが一時的にnullで発火することがある。
+       ログイン中のキャッシュ(cachedUser)が残っている場合は即座にログアウト扱いにせず、
+       少し待ってから本当に未ログインのままかを再確認する
+       （その間に正しいユーザーで再度発火すれば、このタイマーは何もしない）。
+       これにより、実際はログインしたままなのに強制的にログイン画面へ
+       飛ばされてしまう不具合を防ぐ。 */
+    auth.onAuthStateChanged(async user => {
+      if (!user) {
+        if (localStorage.getItem("cachedUser")) {
+          (function () {
+            // 端末やネットワークが遅いと1回・1.5秒の再確認だけでは間に合わないことがあるため、
+            // 間隔を広げながら最大4回(合計15秒)まで再確認してから本当に未ログインと判断する。
+            const delays = [1000, 2000, 4000, 8000];
+            const recheck = (i) => {
+              setTimeout(() => {
+                if (auth.currentUser) return;
+                if (i + 1 < delays.length) recheck(i + 1);
+                else {
+                handleSignedOut();
+                if (window.VOCABOOST_SHOW_SESSION_LOST_NOTICE) {
+                  window.VOCABOOST_SHOW_SESSION_LOST_NOTICE(!navigator.onLine);
+                }
+              }
+              }, delays[i]);
+            };
+            recheck(0);
+          })();
+          return;
+        }
+        handleSignedOut();
+        return;
+      }
+
+      currentUser = user;
+
+      if (user) {
+        localStorage.setItem(
+          "cachedUser",
+          JSON.stringify({ uid: user.uid })
+        );
+        statusDiv.textContent = "ログイン中: " + user.uid;
+        loginBtn.style.display = "none";
+        logoutBtn.style.display = "inline-block";
+        settingsBtn.style.display = "inline-block";
+
+        uidSpan.textContent = user.uid;
+        profilePageLink.href = "user.html?id=" + encodeURIComponent(user.uid);
+        emailSpan.textContent = user.email;
+        usernameTextSpan.textContent = user.displayName || "未設定";
+
+        saveProfileCache({
+          uid: user.uid,
+          email: user.email,
+          username: user.displayName || "未設定"
+        });
+
+        loadBookCount();
+      } else {
+        statusDiv.textContent = "ログアウト中";
+        loginBtn.style.display = "inline-block";
+        logoutBtn.style.display = "none";
+        settingsBtn.style.display = "none";
+      }
+    });
+
+    function goPage(page) {
+      if (page === "index.html") {
+        location.href = "index.html";
+        return;
+      }
+      // currentUserはFirebaseの認証確認(非同期)が完了するまでnullのままのため、
+      // ページ読み込み直後にボタンを押すと「未ログイン」と誤判定されることがあった。
+      // localStorageのキャッシュがあれば、確認が終わっていなくても遷移してよいと判断する。
+      const hasCachedUser = !!localStorage.getItem("cachedUser");
+      if (currentUser || hasCachedUser) {
+        location.href = page;
+      } else {
+        alert("ログインしてください");
+        location.href = "login.html";
+      }
+    }
+
+    function logout() {
+      localStorage.removeItem("cachedUser");
+      localStorage.removeItem(PROFILE_CACHE_KEY);
+      auth.signOut();
+    }
+
+    /* ===== 作成単語帳数 ===== */
+    async function loadBookCount() {
+      try {
+        const snap = await db.collection("wordbooks")
+          .where("owner", "==", currentUser.uid)
+          .get();
+
+        bookCountSpan.textContent = snap.size;
+        saveProfileCache({ bookCount: snap.size });
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    /* ===== パスワード変更 ===== */
+    async function changePassword() {
+      const current = document.getElementById("currentPass").value;
+      const newPass = document.getElementById("newPass").value;
+      const newPassConfirm = document.getElementById("newPassConfirm").value;
+      const msg = document.getElementById("passMsg");
+
+      if (!current || !newPass || !newPassConfirm) {
+        msg.textContent = "すべて入力してください";
+        msg.className = "notice";
+        return;
+      }
+
+      if (newPass !== newPassConfirm) {
+        msg.textContent = "新しいパスワードが一致しません";
+        msg.className = "notice";
+        return;
+      }
+
+      try {
+        const cred = firebase.auth.EmailAuthProvider.credential(
+          currentUser.email,
+          current
+        );
+
+        await currentUser.reauthenticateWithCredential(cred);
+        await currentUser.updatePassword(newPass);
+
+        msg.textContent = "パスワードを変更しました";
+        msg.className = "success";
+
+        document.getElementById("currentPass").value = "";
+        document.getElementById("newPass").value = "";
+        document.getElementById("newPassConfirm").value = "";
+      } catch (e) {
+        msg.textContent = "エラー: " + e.message;
+        msg.className = "notice";
+      }
+    }
+
+    /* ===== キャッシュの削除 =====
+       表示を速くするための一時的な保存データ(localStorage/sessionStorage)と、
+       Service Workerが保存しているページのコピー(Cache Storage)を削除する。
+       次のものは削除しない（下の一覧に無い保存データは、今後増えたものも含めてすべて削除対象）:
+        - オフラインに保存した単語帳と、オフラインモードのページを電波が無くても開くためのファイル
+        - ログイン状態、表示設定（フォント・ダークモード）
+        - 学習の記録（テストの正解済み・暗記の「覚えた」）と、アクセス解析用の端末ID */
+    const KEEP_STORAGE_KEYS = [
+      "vocaboost_offlineBooks",
+      "cachedUser",
+      "vocaboost_theme",
+      "vocaboost_themeMode",
+      "vocaboost_font",
+      "learnedWords",
+      "flashKnownWords",
+      "vocaboost_deviceId"
+    ];
+
+    // オフラインモードで使うページ・ファイルはCache Storageからも消さない
+    function isOfflineAssetUrl(url) {
+      const path = new URL(url).pathname;
+      return /\/offline\/(index|flash|test)\.html$/.test(path) ||
+        /\/(offline-storage\.js|offline-fallback\.html|style\.css|theme\.js|manifest\.json)$/.test(path) ||
+        /\/images\//.test(path) ||
+        /__sw_meta__/.test(path);
+    }
+
+    function formatBytes(bytes) {
+      if (!bytes) return "0 KB";
+      if (bytes < 1024 * 1024) return Math.max(1, Math.round(bytes / 1024)) + " KB";
+      return (bytes / 1024 / 1024).toFixed(1) + " MB";
+    }
+
+    function localStorageBytes() {
+      let total = 0;
+      try {
+        for (let k = 0; k < localStorage.length; k++) {
+          const key = localStorage.key(k);
+          if (KEEP_STORAGE_KEYS.includes(key)) continue;
+          total += (key.length + (localStorage.getItem(key) || "").length) * 2;
+        }
+      } catch (e) { }
+      return total;
+    }
+
+    function showCacheUsage() {
+      const el = document.getElementById("cacheUsage");
+      if (el) el.textContent = "削除できる一時的な保存データ：約 " + formatBytes(localStorageBytes()) + "（ページのコピーを除く）";
+    }
+
+    async function clearSiteCache() {
+      const msg = document.getElementById("cacheMsg");
+      const btn = document.getElementById("clearCacheBtn");
+      if (!confirm("キャッシュを削除しますか？\n（オフラインに保存した単語帳やログイン状態は消えません）")) return;
+
+      btn.disabled = true;
+      msg.className = "notice";
+      msg.textContent = "削除しています...";
+
+      let removedKeys = 0;
+      let removedPages = 0;
+      try {
+        // 1. localStorage（残すもの以外）
+        const keys = [];
+        for (let k = 0; k < localStorage.length; k++) keys.push(localStorage.key(k));
+        keys.forEach(key => {
+          if (!KEEP_STORAGE_KEYS.includes(key)) {
+            localStorage.removeItem(key);
+            removedKeys++;
+          }
+        });
+
+        // 2. sessionStorage（検索ページの一覧の一時保存など）
+        try { sessionStorage.clear(); } catch (e) { }
+
+        // 3. Cache Storage（オフラインモードで使うファイル以外のページのコピー）
+        if (window.caches) {
+          const names = await caches.keys();
+          for (const name of names) {
+            const cache = await caches.open(name);
+            const requests = await cache.keys();
+            for (const req of requests) {
+              if (!isOfflineAssetUrl(req.url)) {
+                await cache.delete(req);
+                removedPages++;
+              }
+            }
+          }
+        }
+
+        msg.className = "success";
+        msg.textContent = `キャッシュを削除しました（保存データ ${removedKeys} 件、ページのコピー ${removedPages} 件）。ページを読み込み直します...`;
+        // 削除した表示用データを使っている画面を作り直すため、少し待ってから再読み込みする
+        setTimeout(() => location.reload(), 1200);
+      } catch (e) {
+        console.error(e);
+        msg.className = "notice";
+        msg.textContent = "削除中にエラーが発生しました: " + e.message;
+        btn.disabled = false;
+      }
+    }
+
+    showCacheUsage();
+
+    /* ===== フォント・ダークモード設定 =====
+       theme.js が起動時に <html data-theme> / --font-family をセット済み。
+       ここでは設定ページ上のUI状態をそれに合わせ、変更時にlocalStorageへ保存する。 */
+    const FONT_KEY = "vocaboost_font";
+    const THEME_KEY = window.VOCABOOST_THEME_KEY;
+    const DEFAULT_FONT = "standard";
+
+    const fontSearch = document.getElementById("fontSearch");
+    const fontList = document.getElementById("fontList");
+    const themeModeSelect = document.getElementById("themeModeSelect");
+
+    // 「標準」を先頭に追加した全フォントリスト
+    const ALL_FONTS = [
+      { family: "standard", label: "標準", category: "OS標準フォント" },
+      ...window.VOCABOOST_GOOGLE_FONTS
+    ];
+
+    const currentFont = localStorage.getItem(FONT_KEY) || DEFAULT_FONT;
+
+    // フォントのプレビュー表示用の読み込み。
+    // 以前は設定ページを開いた瞬間に全フォント(約50種類の日本語フォント全体と、
+    // 約9.5MBの源界明朝)を読み込んでいて非常に重かったため、
+    //  - 画面に表示されたプレビューだけを読み込む（IntersectionObserver）
+    //  - Google Fontsはプレビューの文字(PREVIEW_TEXT)だけを含む小さなフォントを取得する
+    //  - 同梱の源界明朝(ファイルが大きい)はプレビューせず、選択されたときだけ読み込む
+    // ようにしている。
+    const PREVIEW_TEXT = "あア亜Aa";
+
+    function loadPreviewFont(entry) {
+      if (entry.family === "standard" || entry.local) return;
+      if (document.querySelector(`[data-vocaboost-font-preview="${entry.family}"]`)) return;
+      const weightParam = entry.weight ? `:wght@${entry.weight}` : "";
+      const link = document.createElement("link");
+      link.rel = "stylesheet";
+      link.href = `https://fonts.googleapis.com/css2?family=${encodeURIComponent(entry.family)}${weightParam}&text=${encodeURIComponent(PREVIEW_TEXT)}&display=swap`;
+      link.setAttribute("data-vocaboost-font-preview", entry.family);
+      document.head.appendChild(link);
+    }
+
+    const previewObserver = "IntersectionObserver" in window
+      ? new IntersectionObserver((entries) => {
+          entries.forEach(e => {
+            if (!e.isIntersecting) return;
+            const entry = ALL_FONTS.find(f => f.family === e.target.dataset.family);
+            if (entry) loadPreviewFont(entry);
+            previewObserver.unobserve(e.target);
+          });
+        }, { rootMargin: "200px" })
+      : null;
+
+    function ensurePreviewFontLoaded(entry, previewEl) {
+      if (entry.family === "standard") return;
+      if (previewObserver && previewEl) {
+        previewEl.dataset.family = entry.family;
+        previewObserver.observe(previewEl);
+      } else {
+        loadPreviewFont(entry);
+      }
+    }
+
+    function selectFont(font) {
+      localStorage.setItem(FONT_KEY, font);
+
+      if (font === "standard") {
+        document.documentElement.style.removeProperty("--font-family");
+        document.documentElement.setAttribute("data-font", "standard");
+      } else {
+        const entry = ALL_FONTS.find(f => f.family === font);
+        document.documentElement.removeAttribute("data-font");
+        if (entry) {
+          // 選択時はプレビュー用の一部の文字だけでなく、フォント全体を読み込む
+          window.VOCABOOST_LOAD_FONT(entry);
+          document.documentElement.style.setProperty(
+            "--font-family",
+            `"${entry.family}", var(--font-standard)`
+          );
+        }
+      }
+
+      renderFontList(fontSearch.value);
+    }
+
+    function renderFontList(query) {
+      const q = (query || "").trim().toLowerCase();
+
+      const filtered = ALL_FONTS.filter(f =>
+        f.label.toLowerCase().includes(q) ||
+        f.family.toLowerCase().includes(q) ||
+        (f.category || "").toLowerCase().includes(q)
+      );
+
+      fontList.innerHTML = "";
+
+      if (filtered.length === 0) {
+        const empty = document.createElement("div");
+        empty.className = "font-list-empty";
+        empty.textContent = "該当するフォントが見つかりません";
+        fontList.appendChild(empty);
+        return;
+      }
+
+      filtered.forEach(entry => {
+        const item = document.createElement("div");
+        item.className = "font-item" + (entry.family === currentSelectedFont() ? " active" : "");
+
+        const main = document.createElement("div");
+        main.className = "font-item-main";
+
+        const label = document.createElement("div");
+        label.className = "font-item-label";
+        label.textContent = entry.label;
+
+        const category = document.createElement("div");
+        category.className = "font-item-category";
+        category.textContent = entry.category || "";
+
+        main.appendChild(label);
+        main.appendChild(category);
+
+        const preview = document.createElement("div");
+        preview.className = "font-item-preview";
+        preview.textContent = PREVIEW_TEXT;
+        if (entry.local && entry.family !== currentSelectedFont()) {
+          // 同梱フォントはファイルが大きいため、選択されるまでプレビューしない
+          preview.textContent = "選択すると表示";
+          preview.classList.add("font-item-preview-pending");
+        } else if (entry.family !== "standard") {
+          preview.style.fontFamily = `"${entry.family}", sans-serif`;
+          ensurePreviewFontLoaded(entry, preview);
+        }
+
+        item.appendChild(main);
+        item.appendChild(preview);
+
+        item.addEventListener("click", () => selectFont(entry.family));
+
+        fontList.appendChild(item);
+      });
+    }
+
+    function currentSelectedFont() {
+      return localStorage.getItem(FONT_KEY) || DEFAULT_FONT;
+    }
+
+    fontSearch.addEventListener("input", () => renderFontList(fontSearch.value));
+
+    // 初期表示
+    renderFontList("");
+
+    themeModeSelect.value = window.VOCABOOST_GET_THEME_MODE();
+
+    themeModeSelect.addEventListener("change", () => {
+      localStorage.setItem(THEME_KEY, themeModeSelect.value);
+      window.VOCABOOST_APPLY_THEME();
+    });
+  </script>
+
+  <script src="account-widgets.js?v=20260930"></script>
+  <script src="analytics-tracker.js"></script>
+</body>
+
+</html>

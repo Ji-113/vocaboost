@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, user-scalable=yes">
+<title>ログイン</title>
+<link rel="apple-touch-icon" sizes="512x512" href="./images/icon.png">
+<link rel="icon" type="image/x-icon" href="./images/favicon.ico">
+<link rel="stylesheet" type="text/css" href="style.css">
+<link rel="stylesheet" type="text/css" href="login.css">
+</head>
+<body>
+
+<div class="card">
+  <h2>ログイン</h2>
+
+<form onsubmit="login(); return false;">
+
+  <div class="mailaddress">
+    <input id="emailHead" placeholder="メール" autocomplete="username">
+    <div class="domain">@edu.nishiyamato.ed.jp</div>
+  </div>
+  <input id="password" type="password" placeholder="パスワード" autocomplete="current-password">
+
+  <button type="submit">ログイン</button>
+  <div class="link">
+    <a href="forgot.html">
+      パスワードを忘れた場合
+    </a>
+  </div>
+
+  <div class="notice" id="msg"></div>
+
+  <div class="link">
+    登録がまだの方は  
+    <a id="registerLink">こちら</a>
+  </div>
+
+</form>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyD7CJmO3eAO0o2EPRDsVqTtZ_whRd_3-3E",
+  authDomain: "quiz1-4ffdc.firebaseapp.com",
+  projectId: "quiz1-4ffdc"
+};
+firebase.initializeApp(firebaseConfig);
+const auth=firebase.auth();
+// ログイン後の移動先(?redirect=)は、このサイト内のページ(例: view.html?id=xxx)だけを許可する。
+// 以前は値をそのまま location.href に入れていたため、javascript:〜 のURLを仕込んだリンクで
+// ログインした人の画面でスクリプトを実行させたり、外部の偽サイトへ飛ばしたりできてしまっていた。
+function safeRedirect(value) {
+  return typeof value === "string" && /^[A-Za-z0-9_-]+\.html(\?[A-Za-z0-9_=&%.-]*)?$/.test(value)
+    ? value
+    : null;
+}
+
+// Firebaseのエラーを日本語のメッセージにする（英語の生のエラー文をそのまま出さない）
+function authErrorMessage(e) {
+  const map = {
+    "auth/invalid-credential": "メールアドレスまたはパスワードが違います",
+    "auth/invalid-login-credentials": "メールアドレスまたはパスワードが違います",
+    "auth/wrong-password": "メールアドレスまたはパスワードが違います",
+    "auth/user-not-found": "メールアドレスまたはパスワードが違います",
+    "auth/invalid-email": "メールアドレスの形式が正しくありません",
+    "auth/user-disabled": "このアカウントは利用できません",
+    "auth/too-many-requests": "試行回数が多すぎます。しばらく待ってからもう一度お試しください",
+    "auth/network-request-failed": "通信に失敗しました。電波の良い場所でもう一度お試しください",
+    "auth/email-already-in-use": "このメールアドレスはすでに登録されています",
+    "auth/weak-password": "パスワードは6文字以上にしてください"
+  };
+  return (e && map[e.code]) || ((e && e.message) || "不明なエラーが発生しました");
+}
+
+const params = new URLSearchParams(location.search);
+const redirect = safeRedirect(params.get("redirect"));
+
+function login(){
+  const input=document.getElementById("emailHead").value.trim();
+  const pass=document.getElementById("password").value;
+  const msg=document.getElementById("msg");
+
+  if(!input || !pass){
+    msg.textContent="すべて入力してください";
+    return;
+  }
+
+  let email="";
+
+  if(input === "hachikou1616@gmail.com"){
+    email = input;
+  }
+  else if(input.includes("@")){
+    if(input.endsWith("@edu.nishiyamato.ed.jp")){
+      email = input;
+    }else{
+      msg.textContent="このメールアドレスは使用できません";
+      return;
+    }
+  }
+  else{
+    email = input + "@edu.nishiyamato.ed.jp";
+  }
+
+  auth.signInWithEmailAndPassword(email,pass)
+    .then(()=>{
+      if (redirect) {
+        location.href = redirect;
+      } else {
+        location.href = "index.html";
+      }
+    })
+    .catch(e=>{
+      msg.textContent="ログイン失敗："+authErrorMessage(e);
+    });
+}
+
+const registerLink = document.getElementById("registerLink");
+
+if (redirect) {
+  registerLink.href = `register.html?redirect=${encodeURIComponent(redirect)}`;
+} else {
+  registerLink.href = "register.html";
+}
+</script>
+
+<script src="analytics-tracker.js"></script>
+
+</body>
+</html>

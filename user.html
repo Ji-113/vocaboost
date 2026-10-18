@@ -1,0 +1,1212 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1">
+  <title>ユーザー情報</title>
+  <link rel="apple-touch-icon" sizes="512x512" href="./images/icon.png">
+  <link rel="icon" type="image/x-icon" href="./images/favicon.ico">
+  <link rel="stylesheet" type="text/css" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <script src="theme.js"></script>
+  <style>
+    .card {
+      background: var(--color-surface);
+      color: var(--color-text);
+      padding: 25px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+
+    .wordbook {
+      display: flex;
+      justify-content: space-between;
+      min-height: 20px;
+      width: 100%;
+      margin-bottom: 5px;
+      overflow-wrap: anywhere;
+    }
+
+    .wordbook a {
+      display: block;
+      padding: 10px;
+      width: 100%;
+      border: solid thin var(--color-accent);
+      border-radius: 10px;
+      color: var(--color-text);
+      font-weight: normal;
+      text-decoration: none;
+    }
+
+    a {
+      text-decoration: none;
+      color: var(--color-accent);
+      font-weight: bold;
+    }
+
+    html,
+    body {
+      height: 100%;
+      margin: 0;
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
+    }
+
+    main {
+      flex: 1;
+    }
+
+    .list {
+      background: var(--color-surface);
+      margin-top: 20px;
+      padding: 20px;
+      border-radius: 12px;
+    }
+
+    #reportLink {
+      display: none;
+      margin-top: 10px;
+      font-size: 12px;
+      color: var(--color-text-sub);
+      text-decoration: underline;
+      cursor: pointer;
+      background: none;
+      border: none;
+      padding: 0;
+    }
+
+    .modalOverlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      padding: 20px;
+      box-sizing: border-box;
+    }
+
+    .modalBox {
+      background: var(--color-surface);
+      color: var(--color-text);
+      border-radius: 12px;
+      padding: 25px;
+      width: 100%;
+      max-width: 460px;
+      max-height: 80vh;
+      overflow-y: auto;
+      text-align: left;
+    }
+
+    .modalDesc {
+      font-size: 13px;
+      color: var(--color-text-sub);
+      margin-bottom: 10px;
+    }
+
+    .modalActions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      margin-top: 15px;
+    }
+
+    #reportReason {
+      width: 100%;
+      box-sizing: border-box;
+      height: 100px;
+      padding: 12px;
+      border-radius: 10px;
+      border: 1px solid var(--color-border);
+      font-size: 14px;
+      font-family: inherit;
+      resize: vertical;
+    }
+
+    .notice {
+      color: var(--color-danger);
+      min-height: 1.2em;
+      font-size: 13px;
+    }
+
+    .success {
+      color: var(--color-success);
+      min-height: 1.2em;
+      font-size: 13px;
+    }
+
+    /* 自己紹介：改行をそのまま表示し、長いURL等でもはみ出さないようにする */
+    .profile-bio {
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+      text-align: left;
+      max-width: 480px;
+      margin: 6px auto 12px;
+      padding: 10px 14px;
+      border-radius: 10px;
+      background: var(--color-bg);
+      font-size: 14px;
+      line-height: 1.7;
+    }
+
+    /* 期(学年タグ)の色に合わせてページ背景を淡く色付けする（色はstyle.cssのvb-cohort-*） */
+    body[class*="vb-cohort-"] {
+      --color-bg: var(--cohort-soft);
+    }
+
+    .profile-stat {
+      margin: 0 0 4px;
+      font-size: 14px;
+      color: var(--color-text-sub);
+    }
+
+    .profile-stat strong {
+      color: var(--color-text);
+    }
+
+    .profile-cohort {
+      margin: -4px 0 8px;
+    }
+
+    /* ===== 自分のプロフィールの編集（鉛筆ボタン＋その場で編集） ===== */
+    /* 名前・自己紹介は中央寄せにし、鉛筆ボタンはその右外側に重ねて置く
+       （ボタンの幅で中央の位置がずれないよう、レイアウト上の幅には含めない） */
+    .profile-row {
+      display: flex;
+      justify-content: center;
+    }
+
+    .edit-anchor {
+      position: relative;
+      max-width: 100%;
+      min-width: 0;
+    }
+
+    /* 自分のページでは、右側の鉛筆ボタンが画面外にはみ出さない幅に収める */
+    .card.is-own .edit-anchor {
+      max-width: calc(100% - 72px);
+    }
+
+    .edit-anchor > .edit-btn {
+      position: absolute;
+      top: 50%;
+      left: calc(100% + 6px);
+      transform: translateY(-50%);
+    }
+
+    .edit-anchor > p {
+      margin: 0;
+      overflow-wrap: anywhere;
+    }
+
+    .profile-row.name-row {
+      margin-bottom: 16px;
+    }
+
+    .profile-row.bio-row {
+      margin: 6px 0 12px;
+    }
+
+    .profile-row .profile-bio {
+      width: 480px;
+      max-width: 100%;
+      box-sizing: border-box;
+    }
+
+    .edit-btn {
+      flex-shrink: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 30px;
+      height: 30px;
+      padding: 0;
+      margin: 0;
+      border: 1px solid var(--color-border);
+      border-radius: 50%;
+      background: var(--color-surface);
+      color: var(--color-text-sub);
+      cursor: pointer;
+    }
+
+    .edit-btn:hover {
+      color: var(--color-accent);
+      border-color: var(--color-accent);
+    }
+
+    .profile-avatar-wrap {
+      position: relative;
+      width: 120px;
+      margin: 0 auto 15px;
+    }
+
+    .profile-avatar-wrap .profile-avatar {
+      margin-bottom: 0;
+    }
+
+    .avatar-edit-btn {
+      position: absolute;
+      right: 0;
+      bottom: 0;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+    }
+
+    .inline-editor {
+      max-width: 480px;
+      margin: 0 auto 14px;
+      text-align: left;
+      padding: 12px;
+      border: 1px solid var(--color-border);
+      border-radius: 10px;
+    }
+
+    .inline-editor input,
+    .inline-editor textarea {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid var(--color-border);
+      font-size: 14px;
+    }
+
+    .inline-editor textarea {
+      min-height: 110px;
+      line-height: 1.6;
+      resize: vertical;
+    }
+
+    .inline-editor-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .inline-editor-actions button {
+      margin: 0;
+    }
+
+    .secondary-btn {
+      background: var(--color-border) !important;
+      color: var(--color-text) !important;
+    }
+
+    .bio-count {
+      text-align: right;
+      font-size: 12px;
+      color: var(--color-text-sub);
+      margin-top: 4px;
+    }
+
+    .profile-bio.is-empty {
+      color: var(--color-text-sub);
+      font-style: italic;
+    }
+
+    .profile-avatar {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 15px;
+    }
+
+    /* X/Instagram/Threadsのフォローボタンに近い見た目：
+       未フォロー時は塗りのピル型ボタン、フォロー中は輪郭のみに変える */
+    .followBtn {
+      display: none;
+      margin: 4px auto 10px;
+      padding: 8px 22px;
+      border-radius: 999px;
+      font-weight: bold;
+      font-size: 14px;
+      border: 1.5px solid var(--color-accent);
+      background: var(--color-accent);
+      color: var(--color-accent-text);
+      cursor: pointer;
+      font-family: inherit;
+    }
+
+    .followBtn.following {
+      background: var(--color-surface);
+      color: var(--color-accent);
+    }
+
+    /* X(旧Twitter)のプロフィールにあるような「◯人のフォロワー」のリンク風表示 */
+    .followerCountBtn {
+      display: block;
+      margin: 0 auto 4px;
+      background: none;
+      border: none;
+      padding: 2px 6px;
+      font-size: 14px;
+      color: var(--color-text-sub);
+      cursor: pointer;
+      font-family: inherit;
+    }
+
+    .followerCountBtn:hover {
+      text-decoration: underline;
+    }
+
+    .followerCountBtn strong {
+      color: var(--color-text);
+    }
+
+    .userRow {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      border: 1px solid var(--color-border);
+      border-radius: 10px;
+      padding: 10px 14px;
+      margin-bottom: 8px;
+    }
+
+    .userRow a.userLink {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: var(--color-text);
+      text-decoration: none;
+      flex: 1;
+      min-width: 0;
+      overflow-wrap: anywhere;
+    }
+
+    .emptyMsg {
+      color: var(--color-text-sub);
+      font-size: 14px;
+      text-align: center;
+      padding: 10px 0;
+    }
+  </style>
+</head>
+
+<body>
+
+  <header>
+    <p class="headertitle">
+      <a href="index.html"><img src="./images/rogo.png" height="70vh"></a>
+    </p>
+    <div id="status" style="display:none">ログイン確認中...</div>
+    <div>
+      <span id="notifBellContainer"></span>
+      <button id="settingsBtn" class="header-btn" style="display:none" onclick="goPage('settings.html')">設定</button>
+      <button id="loginBtn" class="header-btn" onclick="location.href='login.html'">ログイン</button>
+      <button id="logoutBtn" class="header-btn" style="display:none" onclick="logout()">ログアウト</button>
+    </div>
+  </header>
+
+  <main>
+    <div class="card">
+      <h2>ユーザー情報</h2>
+      <div class="profile-avatar-wrap">
+        <div id="avatarContainer" class="profile-avatar"></div>
+        <button type="button" id="editAvatarBtn" class="edit-btn avatar-edit-btn" style="display:none" onclick="toggleEditor('avatar')" aria-label="プロフィール写真を編集" title="プロフィール写真を編集"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button>
+      </div>
+      <div id="avatarEditor" class="inline-editor" style="display:none">
+        <div class="inline-editor-actions">
+          <button type="button" onclick="changeAvatar()">写真を選択</button>
+          <button type="button" id="removeAvatarBtn" class="secondary-btn" onclick="removeAvatar()">写真を削除</button>
+          <button type="button" class="secondary-btn" onclick="toggleEditor('avatar', false)">閉じる</button>
+        </div>
+        <div id="avatarMsg" class="notice"></div>
+      </div>
+
+      <div class="profile-row name-row">
+        <div class="edit-anchor">
+        <p id="userNameText">読み込み中...</p>
+        <button type="button" id="editNameBtn" class="edit-btn" style="display:none" onclick="toggleEditor('name')" aria-label="ユーザー名を編集" title="ユーザー名を編集"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button>
+        </div>
+      </div>
+      <div id="nameEditor" class="inline-editor" style="display:none">
+        <form autocomplete="off" onsubmit="saveName(); return false;">
+          <input type="text" id="nameInput" maxlength="30" placeholder="新しいユーザー名" autocomplete="off" autocapitalize="off" spellcheck="false">
+          <div class="inline-editor-actions">
+            <button type="submit">保存</button>
+            <button type="button" class="secondary-btn" onclick="toggleEditor('name', false)">キャンセル</button>
+          </div>
+        </form>
+        <div id="nameMsg" class="notice"></div>
+      </div>
+
+      <div id="cohortBadge" class="profile-cohort"></div>
+
+      <div class="profile-row bio-row">
+        <div class="edit-anchor">
+        <p id="bioText" class="profile-bio" style="display:none"></p>
+        <button type="button" id="editBioBtn" class="edit-btn" style="display:none" onclick="toggleEditor('bio')" aria-label="自己紹介を編集" title="自己紹介を編集"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button>
+        </div>
+      </div>
+      <div id="bioEditor" class="inline-editor" style="display:none">
+        <textarea id="bioInput" maxlength="200" placeholder="例：英検準1級に向けて勉強中です。よろしくお願いします！"></textarea>
+        <div class="bio-count"><span id="bioCount">0</span> / 200</div>
+        <div class="inline-editor-actions">
+          <button type="button" onclick="saveBioFromPage()">保存</button>
+          <button type="button" class="secondary-btn" onclick="toggleEditor('bio', false)">キャンセル</button>
+        </div>
+        <div id="bioMsg" class="notice"></div>
+      </div>
+      <p id="bookCountText" class="profile-stat" style="display:none"></p>
+      <button type="button" id="followerCountBtn" class="followerCountBtn" style="display:none" onclick="openFollowersModal()"></button>
+      <button type="button" id="followBtn" class="followBtn" onclick="toggleFollow()">フォロー</button>
+      <button type="button" id="reportLink" onclick="openReportModal()">このユーザーを報告する</button>
+    </div>
+
+    <div class="list">
+      <h3>公開している単語帳</h3>
+      <div id="bookList"></div>
+    </div>
+  </main>
+
+  <div id="reportModal" class="modalOverlay" style="display:none;">
+    <div class="modalBox">
+      <h3>このユーザーを報告する</h3>
+      <p class="modalDesc">通報内容は運営にのみ共有されます。通報理由を入力してください（必須）。</p>
+      <textarea id="reportReason" placeholder="例：不適切な単語帳を作成している、迷惑行為など"></textarea>
+      <div id="reportMsg" class="notice"></div>
+      <div class="modalActions">
+        <button type="button" onclick="closeReportModal()">キャンセル</button>
+        <button type="button" id="reportSubmitBtn" onclick="submitReport()">通報する</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="followersModal" class="modalOverlay" style="display:none;">
+    <div class="modalBox">
+      <h3>フォロワー</h3>
+      <div id="followersList"><p class="emptyMsg">読み込み中...</p></div>
+      <div class="modalActions">
+        <button type="button" onclick="closeFollowersModal()">閉じる</button>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <div class="footer-inner">
+      <div class="footertitle"><img src="./images/rogo.png" height="70vh">
+      </div>
+      <div class="footer-links">
+        <a href="index.html">ホーム</a>
+        <a href="list.html">検索</a>
+        <a href="create.html">作成</a>
+        <a href="favorites.html">お気に入り</a>
+        <a href="settings.html">設定</a>
+        <a href="update.html">更新履歴</a>
+        <a href="contact.html">お問い合わせ</a>
+      </div>
+      <div class="copy">© 2026 TEAM-Minimal, Shiratae</div>
+    </div>
+  </footer>
+
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+
+      const firebaseConfig = {
+        apiKey: "AIzaSyD7CJmO3eAO0o2EPRDsVqTtZ_whRd_3-3E",
+        authDomain: "quiz1-4ffdc.firebaseapp.com",
+        projectId: "quiz1-4ffdc",
+        storageBucket: "quiz1-4ffdc.firebasestorage.app",
+        messagingSenderId: "152062126332",
+        appId: "1:152062126332:web:845af237a1a76207214f79"
+      };
+
+      firebase.initializeApp(firebaseConfig);
+      const db = firebase.firestore();
+      const auth = firebase.auth();
+      let currentUser = null;
+      let targetUsername = null;
+      // 自分のプロフィールページを開いているか（編集ボタンの表示判定）と、編集用の現在値
+      let isOwnPage = false;
+      // 作成した単語帳数（users.bookCount / 公開単語帳の数 / 自分のページでの実数）
+      let storedBookCount = null;
+      let publicBookCount = null;
+      let ownBookCount = null;
+      const profileState = { username: "", bio: "", photoURL: null, cohort: null };
+
+      const statusDiv = document.getElementById("status");
+      const loginBtn = document.getElementById("loginBtn");
+      const logoutBtn = document.getElementById("logoutBtn");
+      const settingsBtn = document.getElementById("settingsBtn");
+
+      // ログイン情報のキャッシュを利用してヘッダーを即時表示
+      const savedUser =
+        JSON.parse(localStorage.getItem("cachedUser"));
+
+      if (savedUser) {
+        settingsBtn.style.display = "inline-block";
+        logoutBtn.style.display = "inline-block";
+        loginBtn.style.display = "none";
+      }
+
+      function handleSignedOut() {
+        // cachedUserは明示的なログアウト操作(logout())でのみ削除する
+        // (ここで消すと、次に一時的にnullが発火した際の再確認猶予が効かなくなるため)
+        statusDiv.textContent = "ログアウト中";
+        loginBtn.style.display = "inline-block";
+        logoutBtn.style.display = "none";
+        settingsBtn.style.display = "none";
+        if (uid) setOwnPage(false);
+      }
+
+      // Firebaseが端末に保存された認証状態を復元し終える前に、onAuthStateChangedが
+      // 一時的にnullで発火することがある。ログイン中のキャッシュ(cachedUser)が
+      // 残っている場合は即座にログアウト扱いにせず、少し待ってから本当に
+      // 未ログインのままかを再確認する（実際はログインしたままなのに一瞬
+      // ログアウト状態の表示になってしまう不具合を防ぐため）。
+      auth.onAuthStateChanged(user => {
+        currentUser = user;
+        if (user) {
+          localStorage.setItem(
+            "cachedUser",
+            JSON.stringify({ uid: user.uid })
+          );
+          statusDiv.textContent = "ログイン中: " + user.uid;
+          loginBtn.style.display = "none";
+          logoutBtn.style.display = "inline-block";
+          settingsBtn.style.display = "inline-block";
+
+          const reportLink = document.getElementById("reportLink");
+          if (reportLink && uid && user.uid !== uid) {
+            reportLink.style.display = "inline";
+          }
+
+          if (uid && user.uid !== uid) {
+            loadFollowState(user.uid);
+          }
+
+          if (uid) setOwnPage(user.uid === uid);
+        } else if (localStorage.getItem("cachedUser")) {
+          (function () {
+            // 端末やネットワークが遅いと1回・1.5秒の再確認だけでは間に合わないことがあるため、
+            // 間隔を広げながら最大4回(合計15秒)まで再確認してから本当に未ログインと判断する。
+            const delays = [1000, 2000, 4000, 8000];
+            const recheck = (i) => {
+              setTimeout(() => {
+                if (auth.currentUser) return;
+                if (i + 1 < delays.length) recheck(i + 1);
+                else {
+                handleSignedOut();
+                if (window.VOCABOOST_SHOW_SESSION_LOST_NOTICE) {
+                  window.VOCABOOST_SHOW_SESSION_LOST_NOTICE(!navigator.onLine);
+                }
+              }
+              }, delays[i]);
+            };
+            recheck(0);
+          })();
+        } else {
+          handleSignedOut();
+        }
+      });
+
+      window.goPage = function (page) {
+        if (page === "index.html") {
+          location.href = "index.html";
+          return;
+        }
+        const hasCachedUser = !!localStorage.getItem("cachedUser");
+        if (currentUser || hasCachedUser) {
+          location.href = page;
+        } else {
+          alert("ログインしてください");
+          location.href = "login.html";
+        }
+      };
+
+      window.logout = function () {
+        localStorage.removeItem("cachedUser");
+        auth.signOut();
+      };
+
+      // XSS対策: テキストをそのまま innerHTML に差し込まないようにエスケープする
+      function escapeHtml(str) {
+        return String(str)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&#039;");
+      }
+
+      // createdAt が Firestore Timestamp / Date / 数値 / 文字列 のどれでも
+      // 比較可能な数値(ミリ秒)に変換する
+      function toMillis(createdAt) {
+        if (!createdAt) return 0;
+        if (typeof createdAt.toMillis === "function") return createdAt.toMillis();
+        if (createdAt instanceof Date) return createdAt.getTime();
+        const t = new Date(createdAt).getTime();
+        return isNaN(t) ? 0 : t;
+      }
+
+      function renderBooksHtml(books) {
+        if (books.length === 0) {
+          return "<p>公開単語帳はありません</p>";
+        }
+        return books.map(b => `
+          <div class="wordbook">
+            <a href="view.html?id=${encodeURIComponent(b.id)}">
+              ${escapeHtml(b.title)}
+            </a>
+          </div>
+        `).join("");
+      }
+
+      const params = new URLSearchParams(location.search);
+      const uid = params.get("id");
+      const cacheKey = `user_${uid}`;
+
+      const userNameText = document.getElementById("userNameText");
+      const avatarContainer = document.getElementById("avatarContainer");
+      const bookList = document.getElementById("bookList");
+
+      if (!uid) {
+        if (userNameText) {
+          userNameText.textContent = "ユーザーIDがありません";
+        }
+        return;
+      }
+
+      // 単語帳一覧を取得する。
+      // owner + isPublic + orderBy(createdAt) は複合インデックスが必要なため、
+      // 未作成の環境でもクエリが失敗して全体が止まらないよう、
+      // orderBy 付きクエリが失敗した場合は orderBy なしで再取得し、
+      // 取得後にJS側で createdAt 降順にソートするフォールバックを用意する。
+      async function fetchBooks(uid) {
+        let snap;
+        try {
+          snap = await db.collection("wordbooks")
+            .where("owner", "==", uid)
+            .where("isPublic", "==", true)
+            .orderBy("createdAt", "desc")
+            .get();
+        } catch (e) {
+          console.warn("orderBy付きクエリに失敗。インデックス無しクエリにフォールバックします。", e);
+          snap = await db.collection("wordbooks")
+            .where("owner", "==", uid)
+            .where("isPublic", "==", true)
+            .get();
+        }
+
+        const books = [];
+        snap.forEach(doc => {
+          const b = doc.data();
+          books.push({
+            id: doc.id,
+            title: b.title || "(無題)",
+            createdAtMillis: toMillis(b.createdAt)
+          });
+        });
+
+        // 取得元がソート済みかどうかに関わらず、必ず作成日時の降順に並べ直す
+        books.sort((a, b) => b.createdAtMillis - a.createdAtMillis);
+
+        return books;
+      }
+
+      // 自己紹介はユーザー入力のためtextContentで表示する（HTMLとして解釈させない）。
+      // 自分のページで未設定の場合は、編集できることが分かるよう案内文を出す。
+      function renderBio(text) {
+        const bioText = document.getElementById("bioText");
+        if (!bioText) return;
+        const bio = typeof text === "string" ? text.trim() : "";
+        profileState.bio = bio;
+        bioText.classList.toggle("is-empty", !bio);
+        bioText.textContent = bio || (isOwnPage ? "自己紹介はまだありません" : "");
+        bioText.style.display = (bio || isOwnPage) ? "block" : "none";
+      }
+
+      /* ===== 自分のプロフィールの編集 =====
+         自分のページを開いている場合だけ、ユーザー名・自己紹介・写真の横に
+         鉛筆ボタンを出し、押した部分だけをその場で編集できるようにする。
+         保存処理は settings.html と共通の profile-editor.js を使う。 */
+
+      function setOwnPage(own) {
+        isOwnPage = own;
+        const profileCard = document.querySelector("main .card");
+        if (profileCard) profileCard.classList.toggle("is-own", own);
+        ["editAvatarBtn", "editNameBtn", "editBioBtn"].forEach(id => {
+          const btn = document.getElementById(id);
+          if (btn) btn.style.display = own ? "inline-flex" : "none";
+        });
+        if (!own) ["avatar", "name", "bio"].forEach(k => toggleEditor(k, false));
+        if (own && ownBookCount === null) refreshOwnBookCount();
+        renderBio(profileState.bio);
+      }
+
+      window.toggleEditor = function (kind, open) {
+        const editor = document.getElementById(kind + "Editor");
+        if (!editor) return;
+        const show = open === undefined ? editor.style.display === "none" : open;
+        editor.style.display = show ? "block" : "none";
+        const msg = document.getElementById(kind + "Msg");
+        if (msg) msg.textContent = "";
+        if (!show) return;
+
+        if (kind === "name") {
+          const input = document.getElementById("nameInput");
+          input.value = profileState.username;
+          input.focus();
+        } else if (kind === "bio") {
+          const input = document.getElementById("bioInput");
+          input.value = profileState.bio;
+          document.getElementById("bioCount").textContent = input.value.length;
+          input.focus();
+        } else if (kind === "avatar") {
+          document.getElementById("removeAvatarBtn").style.display =
+            window.VOCABOOST_IS_VALID_PHOTO_URL(profileState.photoURL) ? "" : "none";
+        }
+      };
+
+      document.getElementById("bioInput").addEventListener("input", (e) => {
+        document.getElementById("bioCount").textContent = e.target.value.length;
+      });
+
+      function showEditorMsg(kind, text, ok) {
+        const msg = document.getElementById(kind + "Msg");
+        if (!msg) return;
+        msg.textContent = text;
+        msg.className = ok ? "success" : "notice";
+      }
+
+      function errorText(e) {
+        return (e && e.code ? "エラー: " : "") + (e && e.message ? e.message : String(e));
+      }
+
+      // 編集結果を、このページの先行表示用キャッシュにも反映する
+      function updateUserPageCache(partial) {
+        try {
+          const cached = JSON.parse(localStorage.getItem(cacheKey) || "null");
+          if (!cached) return;
+          localStorage.setItem(cacheKey, JSON.stringify({ ...cached, ...partial }));
+        } catch (e) {
+          console.warn("キャッシュの更新に失敗しました", e);
+        }
+      }
+
+      // settings.htmlの先行表示用キャッシュも合わせて更新する
+      function updateSettingsCache(partial) {
+        try {
+          const cached = JSON.parse(localStorage.getItem("settingsProfileCache") || "null");
+          if (!cached) return;
+          localStorage.setItem("settingsProfileCache", JSON.stringify({ ...cached, ...partial }));
+        } catch (e) { }
+      }
+
+      function renderAvatar() {
+        const html = window.VOCABOOST_AVATAR_HTML(profileState.photoURL, 120, profileState.cohort);
+        if (avatarContainer) avatarContainer.innerHTML = html;
+        return html;
+      }
+
+      window.saveName = async function () {
+        if (!currentUser || !isOwnPage) return;
+        try {
+          const name = await window.VOCABOOST_PROFILE.saveUsername(
+            db, currentUser, document.getElementById("nameInput").value
+          );
+          profileState.username = name;
+          targetUsername = name;
+          userNameText.textContent = "ユーザー名: " + name;
+          updateUserPageCache({ username: name });
+          updateSettingsCache({ username: name });
+          toggleEditor("name", false);
+        } catch (e) {
+          showEditorMsg("name", errorText(e), false);
+        }
+      };
+
+      window.saveBioFromPage = async function () {
+        if (!currentUser || !isOwnPage) return;
+        try {
+          const bio = await window.VOCABOOST_PROFILE.saveBio(
+            db, currentUser.uid, document.getElementById("bioInput").value
+          );
+          renderBio(bio);
+          updateUserPageCache({ bio });
+          updateSettingsCache({ bio });
+          toggleEditor("bio", false);
+        } catch (e) {
+          showEditorMsg("bio", errorText(e), false);
+        }
+      };
+
+      window.changeAvatar = async function () {
+        if (!currentUser || !isOwnPage) return;
+        try {
+          const dataUrl = await window.VOCABOOST_PROFILE.pickAndCropAvatar();
+          if (!dataUrl) return;
+          showEditorMsg("avatar", "アップロード中...", false);
+          await window.VOCABOOST_PROFILE.savePhoto(db, currentUser.uid, dataUrl);
+          profileState.photoURL = dataUrl;
+          updateUserPageCache({ avatarHtml: renderAvatar() });
+          updateSettingsCache({ photoURL: dataUrl });
+          toggleEditor("avatar", false);
+        } catch (e) {
+          showEditorMsg("avatar", errorText(e), false);
+        }
+      };
+
+      window.removeAvatar = async function () {
+        if (!currentUser || !isOwnPage) return;
+        try {
+          await window.VOCABOOST_PROFILE.savePhoto(db, currentUser.uid, null);
+          profileState.photoURL = null;
+          updateUserPageCache({ avatarHtml: renderAvatar() });
+          updateSettingsCache({ photoURL: null });
+          toggleEditor("avatar", false);
+        } catch (e) {
+          showEditorMsg("avatar", errorText(e), false);
+        }
+      };
+
+      // 認証確認を待たずに、ログイン中キャッシュから自分のページかどうかを仮判定しておく
+      try {
+        const saved = JSON.parse(localStorage.getItem("cachedUser") || "null");
+        if (saved && saved.uid && saved.uid === uid) setOwnPage(true);
+      } catch (e) { }
+
+      // 期(学年タグ)をバッジ表示し、ページ背景をその期の色に近い色にする
+      function renderCohort(cohort) {
+        const badge = document.getElementById("cohortBadge");
+        document.body.classList.remove("vb-cohort-green", "vb-cohort-blue", "vb-cohort-red");
+        if (cohort === undefined || cohort === null) {
+          if (badge) badge.innerHTML = "";
+          return;
+        }
+        if (badge) badge.innerHTML = window.VOCABOOST_COHORT_BADGE_HTML(cohort);
+        const color = window.VOCABOOST_COHORT_COLOR(cohort);
+        if (color) document.body.classList.add("vb-cohort-" + color);
+      }
+
+      /* ===== 作成した単語帳数 =====
+         他人の非公開単語帳は読み取れないため、本人のログイン時に account-widgets.js が
+         保存している users/{uid}.bookCount を使う（未保存・古い場合に備えて公開数との大きい方）。
+         自分のページでは自分の単語帳をすべて読めるので、その場で正確に数える。 */
+
+      function renderBookCount() {
+        const el = document.getElementById("bookCountText");
+        if (!el) return;
+        const candidates = [storedBookCount, publicBookCount, ownBookCount].filter(n => typeof n === "number");
+        if (candidates.length === 0) return;
+        const count = ownBookCount !== null ? ownBookCount : Math.max(...candidates);
+        el.innerHTML = `作成した単語帳数：<strong>${count}</strong>`;
+        el.style.display = "block";
+        updateUserPageCache({ bookCount: count });
+      }
+
+      async function refreshOwnBookCount() {
+        try {
+          const query = db.collection("wordbooks").where("owner", "==", uid);
+          ownBookCount = typeof query.count === "function"
+            ? (await query.count().get()).data().count
+            : (await query.get()).size;
+          renderBookCount();
+        } catch (e) {
+          console.error("単語帳数の取得に失敗しました", e);
+        }
+      }
+
+      async function loadUser() {
+        const cachedData = localStorage.getItem(cacheKey);
+
+        if (cachedData) {
+          try {
+            const data = JSON.parse(cachedData);
+            userNameText.textContent = "ユーザー名: " + data.username;
+            profileState.username = data.username || "";
+            if (avatarContainer) avatarContainer.innerHTML = data.avatarHtml || "";
+            renderBio(data.bio);
+            renderCohort(data.cohort);
+            if (typeof data.bookCount === "number") {
+              storedBookCount = data.bookCount;
+              renderBookCount();
+            }
+            bookList.innerHTML = data.booksHtml;
+          } catch (e) {
+            console.error(e);
+          }
+        }
+
+        // ユーザー情報と単語帳一覧の取得を分離する。
+        // 以前は Promise.all + 単一の try/catch でまとめていたため、
+        // 単語帳側のクエリだけが失敗した場合でも
+        // ユーザー名側まで「読み込みエラー」表示になってしまっていた。
+        let username = null;
+        let avatarHtml = null;
+        let bio = "";
+        let cohort = null;
+        try {
+          const userDoc = await db.collection("users").doc(uid).get();
+
+          if (!userDoc.exists) {
+            if (userNameText) {
+              userNameText.textContent = "ユーザーが見つかりません";
+            }
+            return;
+          }
+
+          const userData = userDoc.data();
+          if (typeof userData.bookCount === "number") storedBookCount = userData.bookCount;
+          username = userData.username || "名無し";
+          targetUsername = username;
+          profileState.username = userData.username || "";
+          profileState.photoURL = userData.photoURL || null;
+          cohort = (userData.cohort !== undefined && userData.cohort !== null)
+            ? window.VOCABOOST_NORMALIZE_COHORT(userData.cohort)
+            : window.VOCABOOST_COHORT_FROM_EMAIL(userData.email);
+          renderCohort(cohort);
+          profileState.cohort = cohort;
+          avatarHtml = window.VOCABOOST_AVATAR_HTML(userData.photoURL, 120, cohort);
+          bio = typeof userData.bio === "string" ? userData.bio : "";
+          renderBio(bio);
+
+          if (userNameText) {
+            userNameText.textContent = "ユーザー名: " + username;
+          }
+          if (avatarContainer) {
+            avatarContainer.innerHTML = avatarHtml;
+          }
+        } catch (e) {
+          console.error(e);
+          if (userNameText) {
+            userNameText.textContent = "読み込みエラー";
+          }
+          // ユーザー情報が取得できない場合でも、単語帳の取得は別途試みる
+        }
+
+        let booksHtml = null;
+        try {
+          const books = await fetchBooks(uid);
+          publicBookCount = books.length;
+          renderBookCount();
+          booksHtml = renderBooksHtml(books);
+          bookList.innerHTML = booksHtml;
+        } catch (e) {
+          console.error(e);
+          bookList.innerHTML = "<p>単語帳の読み込みに失敗しました</p>";
+        }
+
+        // 両方が正常に取得できた場合のみキャッシュを更新する
+        if (username !== null && booksHtml !== null) {
+          try {
+            localStorage.setItem(
+              cacheKey,
+              JSON.stringify({
+                username, avatarHtml, bio, cohort, booksHtml,
+                bookCount: ownBookCount !== null ? ownBookCount : Math.max(storedBookCount || 0, publicBookCount || 0)
+              })
+            );
+          } catch (e) {
+            console.warn("キャッシュの保存に失敗しました", e);
+          }
+        }
+      }
+
+      loadUser();
+
+      // ===== フォロワー =====
+      // 「◯人をフォロー中」ボタンとは逆に、自分をフォローしているユーザー一覧。
+      // users/{uid}.followingIds に自分のuidをarray-containsで含むユーザーを検索して求める
+      // （account-widgets.jsのVOCABOOST_FETCH_FOLLOWERSを共通で利用する）。
+      let followers = [];
+
+      async function loadFollowerCount() {
+        const btn = document.getElementById("followerCountBtn");
+        if (!btn) return;
+        try {
+          followers = await window.VOCABOOST_FETCH_FOLLOWERS(db, uid);
+          btn.innerHTML = `<strong>${followers.length}</strong>人のフォロワー`;
+          btn.style.display = "inline-block";
+        } catch (e) {
+          console.error("フォロワー数の取得に失敗しました", e);
+        }
+      }
+
+      loadFollowerCount();
+
+      window.openFollowersModal = function () {
+        const listEl = document.getElementById("followersList");
+        if (followers.length === 0) {
+          listEl.innerHTML = `<p class="emptyMsg">フォロワーはいません</p>`;
+        } else {
+          listEl.innerHTML = followers.map(u => `
+            <div class="userRow">
+              <a class="userLink" href="user.html?id=${encodeURIComponent(u.id)}">
+                ${window.VOCABOOST_AVATAR_HTML(u.photoURL, 36, u.cohort ?? window.VOCABOOST_COHORT_FROM_EMAIL(u.email))}
+                <span>${escapeHtml(u.username || "名無し")}</span>
+              </a>
+            </div>
+          `).join("");
+        }
+        document.getElementById("followersModal").style.display = "flex";
+      };
+
+      window.closeFollowersModal = function () {
+        document.getElementById("followersModal").style.display = "none";
+      };
+
+      // ===== フォロー =====
+      // users/{uid}.followingIds に「自分がフォローしているユーザーのuid」の配列として保存する。
+      // 「誰が自分をフォローしているか」は、この配列に自分のuidが
+      // array-containsで含まれるユーザーを検索することで求める
+      // （フォロワー一覧そのものは今回は表示しないため、双方向の配列は持たせない）。
+      let followingIds = [];
+
+      async function loadFollowState(myUid) {
+        try {
+          const snap = await db.collection("users").doc(myUid).get();
+          followingIds = (snap.exists && snap.data().followingIds) || [];
+        } catch (e) {
+          console.error("フォロー状態の取得に失敗しました", e);
+          followingIds = [];
+        }
+        updateFollowButton();
+      }
+
+      function updateFollowButton() {
+        const btn = document.getElementById("followBtn");
+        if (!btn) return;
+        btn.style.display = "inline-block";
+        const isFollowing = followingIds.includes(uid);
+        btn.classList.toggle("following", isFollowing);
+        btn.textContent = isFollowing ? "フォロー中" : "フォロー";
+      }
+
+      window.toggleFollow = async function () {
+        if (!currentUser) {
+          location.href = `login.html?redirect=${encodeURIComponent(`user.html?id=${uid}`)}`;
+          return;
+        }
+
+        const isFollowing = followingIds.includes(uid);
+
+        try {
+          await db.collection("users").doc(currentUser.uid).set({
+            followingIds: isFollowing
+              ? firebase.firestore.FieldValue.arrayRemove(uid)
+              : firebase.firestore.FieldValue.arrayUnion(uid)
+          }, { merge: true });
+
+          followingIds = isFollowing
+            ? followingIds.filter(x => x !== uid)
+            : followingIds.concat([uid]);
+
+          updateFollowButton();
+
+          // フォローした（解除ではない）ときだけ、相手に通知する
+          if (!isFollowing && window.VOCABOOST_NOTIFY_FOLLOWED) {
+            try {
+              const mySnap = await db.collection("users").doc(currentUser.uid).get();
+              const myName = (mySnap.exists && mySnap.data().username) || "名無し";
+              window.VOCABOOST_NOTIFY_FOLLOWED(db, currentUser.uid, myName, uid);
+            } catch (e) {
+              console.error("フォロー通知の送信に失敗しました", e);
+            }
+          }
+
+          loadFollowerCount();
+        } catch (e) {
+          console.error(e);
+          alert("フォロー状態の更新に失敗しました");
+        }
+      };
+
+      window.openReportModal = function () {
+        if (!currentUser) {
+          alert("ログインしてください");
+          return;
+        }
+        document.getElementById("reportReason").value = "";
+        const msg = document.getElementById("reportMsg");
+        msg.className = "notice";
+        msg.textContent = "";
+        document.getElementById("reportSubmitBtn").disabled = false;
+        document.getElementById("reportModal").style.display = "flex";
+      };
+
+      window.closeReportModal = function () {
+        document.getElementById("reportModal").style.display = "none";
+      };
+
+      window.submitReport = async function () {
+        // 送信中・送信済みは受け付けない（連打で同じ通報が何件も送られていたため）
+        const submitBtn = document.getElementById("reportSubmitBtn");
+        if (submitBtn.disabled) return;
+        const reason = document.getElementById("reportReason").value.trim();
+        const msg = document.getElementById("reportMsg");
+
+        if (!reason) {
+          msg.className = "notice";
+          msg.textContent = "通報理由を入力してください";
+          return;
+        }
+        if (!currentUser) {
+          msg.className = "notice";
+          msg.textContent = "ログインしてください";
+          return;
+        }
+
+        submitBtn.disabled = true;
+        msg.className = "notice";
+        msg.textContent = "送信しています...";
+
+        try {
+          await db.collection("reports").add({
+            type: "user",
+            targetId: uid,
+            targetLabel: targetUsername || "",
+            reason: reason,
+            reportedBy: currentUser.uid,
+            reportedByEmail: currentUser.email || "",
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+          });
+
+          // 運営のヘッダー通知ベルにだけ届く通知（通報理由の中身は含めない）
+          try {
+            await db.collection("notifications").add({
+              title: "新しい通報があります",
+              body: `ユーザー「${targetUsername || uid}」が通報されました`,
+              target: "admin",
+              targetUserIds: [],
+              createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+              createdBy: currentUser.uid
+            });
+          } catch (e) {
+            console.error("admin notification failed", e);
+          }
+
+          msg.className = "success";
+          msg.textContent = "通報しました。ご協力ありがとうございます。";
+          setTimeout(() => { window.closeReportModal(); }, 1200);
+        } catch (e) {
+          console.error(e);
+          msg.className = "notice";
+          msg.textContent = "送信に失敗しました: " + e.message;
+          submitBtn.disabled = false;
+        }
+      };
+
+    });
+  </script>
+
+  <script src="account-widgets.js?v=20260930"></script>
+  <script src="profile-editor.js?v=20260930"></script>
+  <script src="analytics-tracker.js"></script>
+</body>
+
+</html>

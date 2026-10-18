@@ -1,0 +1,779 @@
+/* ===== テーマ・フォント設定 =====
+   settings.html で選択した内容が html要素の data-theme / data-font 属性に
+   反映され、ここで定義したCSS変数を通じて全ページに適用される。 */
+:root {
+  --color-bg: #eef2ff;
+  --color-surface: #ffffff;
+  --color-text: #222222;
+  --color-text-sub: #666666;
+  --color-accent: #191970;
+  --color-accent-text: #ffffff;
+  --color-header: #191970;
+  --color-header-text: #ffffff;
+  --color-border: #cccccc;
+  --color-danger: #b60033;
+  --color-success: #1a7a1a;
+  --color-shadow: rgba(0, 0, 0, 0.1);
+  --font-family: var(--font-standard);
+
+  /* トップページのイラストアイコン（作成/検索）用の配色 */
+  --icon-line: #161616;
+  --icon-accent: #e3d27a;
+  --icon-shadow: #d9d9d9;
+  --icon-hole: var(--color-surface);
+
+  /* 標準フォント（OSの既定フォント。Google Fontsを選んだ場合は theme.js が --font-family を直接上書きする） */
+  --font-standard: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic UI", "Segoe UI", Roboto, sans-serif;
+}
+
+html[data-theme="dark"] {
+  --color-bg: #14151f;
+  --color-surface: #1f2030;
+  --color-text: #eaeaf2;
+  --color-text-sub: #a0a0b0;
+  --color-accent: #6f7bdb;
+  --color-accent-text: #ffffff;
+  /* ダークモードのヘッダー/フッターは画面の暗さに合わせ、目立たない落ち着いた色にする */
+  --color-header: #232433;
+  --color-header-text: #d8d8e8;
+  --color-border: #3a3b4c;
+  --color-danger: #b56b72;
+  --color-success: #5fd16f;
+  --color-shadow: rgba(0, 0, 0, 0.4);
+
+  /* ダークモードのイラストアイコン：黒線は明るいグレーに、黄色は彩度を落として馴染ませる */
+  --icon-line: #cfcfd8;
+  --icon-accent: #b9a965;
+  --icon-shadow: #3a3b4c;
+  --icon-hole: var(--color-surface);
+}
+
+html[data-font="standard"] { --font-family: var(--font-standard); }
+/* Google Fontsから選択した場合は theme.js が --font-family を直接書き換える */
+
+body {
+  margin: 0;
+  font-family: var(--font-family);
+  background: var(--color-bg);
+  color: var(--color-text);
+  display: flex;
+  flex-flow: column;
+  min-height: 100vh;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+header {
+  font-family: var(--font-family);
+  background: var(--color-header);
+  color: var(--color-header-text);
+  padding: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 59px !important;
+  user-select: none;
+}
+
+.headertitle {
+  margin: 0;
+  font-size: 25px;
+
+  a {
+    color: var(--color-header-text);
+    font-weight: normal;
+    text-decoration: none;
+  }
+}
+
+main {
+  max-width: 900px;
+  width: 90%;
+  margin: 30px auto;
+  text-align: center;
+  flex: 1;
+}
+
+button {
+  background: var(--color-accent);
+  color: var(--color-accent-text);
+  border: none;
+  border-radius: 10px;
+  padding: 10px 18px;
+  margin: 5px;
+  font-size: 16px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: opacity 0.2s;
+}
+
+button:active {
+  opacity: 0.7;
+}
+
+/* input[type="file"]の「ファイルを選択」部分はブラウザのシャドウDOM内の
+   要素のため、上のbuttonセレクタが効かず他のボタンだけ浮いて見えていた。
+   ::file-selector-button(標準)と::-webkit-file-upload-button(Safari/Chrome旧)の
+   両方に同じ見た目を当てて統一する。 */
+input[type="file"] {
+  color: var(--color-text);
+  font-family: inherit;
+  font-size: 14px;
+}
+
+input[type="file"]::file-selector-button,
+input[type="file"]::-webkit-file-upload-button {
+  background: var(--color-accent);
+  color: var(--color-accent-text);
+  border: none;
+  border-radius: 10px;
+  padding: 10px 18px;
+  margin-right: 10px;
+  font-size: 16px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: opacity 0.2s;
+}
+
+input[type="file"]::file-selector-button:active,
+input[type="file"]::-webkit-file-upload-button:active {
+  opacity: 0.7;
+}
+
+/* ヘッダー右側のボタン群（ホーム・通知・設定・ログアウト・自分のアイコン）を
+   縦方向の中心でそろえる（アイコンだけのボタンと文字のボタンの高さがずれて見えないように） */
+header > div:last-child,
+header #notifBellContainer {
+  display: flex;
+  align-items: center;
+}
+
+/* ヘッダーのホームボタン（account-widgets.jsが通知ベルの左に追加）。
+   通知ベルと同じ見た目・大きさのアイコンボタンにしている */
+.vb-home-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 12px !important;
+  text-decoration: none;
+}
+
+.vb-home-btn svg {
+  display: block;
+  opacity: 0.9;
+}
+
+/* 左上のロゴも押せることが分かるよう、マウスを乗せたときに少し明るくする */
+.headertitle a {
+  display: inline-block;
+  border-radius: 8px;
+  transition: opacity 0.15s, transform 0.15s;
+}
+
+.headertitle a:hover {
+  opacity: 0.85;
+  transform: scale(1.03);
+}
+
+/* ヘッダーの自分のアイコン（account-widgets.jsがログアウトボタンの右に追加） */
+.vb-header-avatar {
+  display: inline-flex;
+  align-items: center;
+  vertical-align: middle;
+  margin: 0 6px 0 2px;
+  border-radius: 50%;
+  text-decoration: none;
+}
+
+.vb-header-avatar:hover {
+  opacity: 0.85;
+}
+
+.header-btn {
+  font-size: 18px !important;
+  margin: 9px 12px !important;
+  white-space: nowrap;
+  background: var(--color-header);
+  color: var(--color-header-text);
+}
+
+/* 入力欄・テキストエリア・セレクトの基本色をテーマに合わせる
+   （各ページの個別<style>はpadding/border-radius等のレイアウトのみを
+   上書きする想定で、背景色・文字色はここで一括管理する） */
+input,
+textarea,
+select {
+  background-color: var(--color-surface);
+  color: var(--color-text);
+  border-color: var(--color-border);
+  font-family: inherit;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--color-text-sub);
+  font-family: inherit;
+}
+
+a {
+  color: var(--color-accent);
+}
+
+footer {
+  background: var(--color-header);
+  color: var(--color-header-text);
+  padding: 20px 0;
+  line-height: 2.0;
+  margin-top: auto;
+}
+
+.footer-inner {
+  max-width: 1000px;
+  margin: auto;
+  text-align: center;
+  padding: 0 15px;
+}
+
+.footer-links {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+}
+
+.footer-links a {
+  color: var(--color-header-text);
+  text-decoration: none;
+  background-image: linear-gradient(var(--color-header-text), var(--color-header-text));
+  background-repeat: no-repeat;
+  background-position: left 85%; /* 下線の初期位置 */
+  background-size: 0 1px; /* 下線のサイズ（横幅、高さ） */
+  transition: background-size 0.5s;
+  font-weight: bold;
+}
+
+.footer-links a:hover {
+  background-position: left 85%; /* 下線のホバー時位置 */
+  background-size: 100% 1px; /* 下線の横幅を100%にする */
+}
+
+/* レスポンシブ対応 (Mobile First) */
+@media (max-width: 768px) {
+  /* スマホ幅のヘッダー：ロゴを左に小さく、右端に通知ボタンとハンバーガーメニュー */
+  header {
+    flex-direction: row;
+    justify-content: space-between;
+    height: 60px !important;
+    padding: 6px 8px 6px 12px;
+    gap: 8px;
+    box-sizing: border-box;
+  }
+
+  .headertitle {
+    margin: 0;
+    font-size: 20px;
+    display: flex;
+    align-items: center;
+    min-width: 0;
+  }
+
+  .headertitle img {
+    height: 44px;
+    width: auto;
+    display: block;
+  }
+
+  header > div:last-child {
+    display: flex;
+    align-items: center;
+    flex-wrap: nowrap;
+    flex-shrink: 0;
+  }
+
+  /* ボタン類はハンバーガーメニューの中に移すため、ヘッダー上では隠す
+     （ハンバーガーメニューが無いページ＝account-widgets.js未読込のページでは隠さない） */
+  header:has(#vbMobileMenuWrap) #settingsBtn,
+  header:has(#vbMobileMenuWrap) #loginBtn,
+  header:has(#vbMobileMenuWrap) #logoutBtn,
+  header:has(#vbMobileMenuWrap) .vb-header-avatar,
+  header:has(#vbMobileMenuWrap) .admin-link-btn {
+    display: none !important;
+  }
+
+  .vb-mobile-menu-wrap {
+    display: inline-block !important;
+  }
+
+  .notif-bell-btn {
+    margin: 0 4px !important;
+  }
+
+  .vb-home-btn {
+    margin: 0 4px !important;
+  }
+
+  main {
+    margin: 20px auto;
+    width: 95%;
+  }
+
+  .footer-links {
+    flex-direction: column;
+    gap: 5px;
+  }
+}
+
+.copy {
+  font-size: 12px;
+  opacity: 0.8;
+}
+
+.footernewname {
+  color: white !important;
+  font-weight: normal !important;
+  text-decoration: none !important;
+}
+
+/* Loading Overlay */
+#loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  min-height: 150px;
+  background-color: var(--color-surface);
+  opacity: 0.85;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 100;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+  border-radius: 12px;
+}
+
+#loading-overlay.hidden {
+  opacity: 0;
+  visibility: hidden;
+}
+
+.spinner {
+  width: 50px;
+  height: 50px;
+  border: 5px solid var(--color-border);
+  border-top: 5px solid var(--color-accent);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 15px;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.loading-text {
+  color: var(--color-accent);
+  font-weight: bold;
+  font-size: 18px;
+}
+
+/* ===== プロフィール写真（アバター） =====
+   account-widgets.js の VOCABOOST_AVATAR_HTML が生成する<img>/人物アイコンの共通見た目。
+   実際のサイズはインラインstyle(width/height)で指定される。 */
+.vb-avatar-img {
+  border-radius: 50%;
+  object-fit: cover;
+  display: inline-block;
+  vertical-align: middle;
+  flex-shrink: 0;
+  background: var(--color-bg);
+}
+
+.vb-avatar-icon {
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  vertical-align: middle;
+  flex-shrink: 0;
+  background: var(--color-bg);
+  color: var(--color-text-sub);
+}
+
+/* ===== 期（学年タグ）の色：41期=緑、42期=青、43期=赤…の3色周期 =====
+   --cohort-main: 文字・アイコン色 / --cohort-soft: 淡い背景色 */
+.vb-cohort-green { --cohort-main: #1e9e4a; --cohort-soft: #e3f6e9; }
+.vb-cohort-blue  { --cohort-main: #2563eb; --cohort-soft: #e3ecfd; }
+.vb-cohort-red   { --cohort-main: #dc2f3c; --cohort-soft: #fce6e8; }
+
+html[data-theme="dark"] .vb-cohort-green { --cohort-main: #4cc374; --cohort-soft: #14261b; }
+html[data-theme="dark"] .vb-cohort-blue  { --cohort-main: #6d9bf5; --cohort-soft: #151f36; }
+html[data-theme="dark"] .vb-cohort-red   { --cohort-main: #f06b75; --cohort-soft: #2e1619; }
+
+.vb-avatar-icon[class*="vb-cohort-"] {
+  color: var(--cohort-main);
+  background: var(--cohort-soft);
+}
+
+/* 文字を楕円の上下中央に置く（行の高さ任せにすると日本語フォントでは文字が上に寄って見えるため、
+   高さを固定してflexで中央に配置する） */
+.vb-cohort-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  height: 22px;
+  padding: 0 9px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: bold;
+  line-height: 1;
+  vertical-align: middle;
+  white-space: nowrap;
+  border: 1px solid var(--cohort-main, var(--color-border));
+  color: var(--cohort-main, var(--color-text-sub));
+  background: var(--cohort-soft, transparent);
+}
+
+.vb-avatar-icon svg {
+  width: 60%;
+  height: 60%;
+}
+
+/* ===== 写真付きユーザー表示ボタン（作成者名など） =====
+   view.html/list.html で、アバター(VOCABOOST_AVATAR_HTML)と名前を並べて
+   枠で囲んで表示する共通スタイル。 */
+.creator-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  border: 1px solid var(--color-accent);
+  border-radius: 999px;
+  color: var(--color-text) !important;
+  text-decoration: none !important;
+  font-weight: bold;
+  background: var(--color-surface);
+}
+
+.creator-btn:hover {
+  background: var(--color-bg);
+}
+
+/* ===== ヘッダー通知ベル（account-widgets.js が描画） ===== */
+.notif-bell-wrap {
+  position: relative;
+  display: inline-block;
+}
+
+.notif-bell-btn {
+  position: relative;
+  padding: 8px 12px !important;
+  display: inline-flex;
+  align-items: center;
+}
+
+.notif-bell-icon {
+  display: block;
+  opacity: 0.9;
+}
+
+.notif-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: 9px;
+  background: var(--color-danger);
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: bold;
+  line-height: 18px;
+  text-align: center;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+}
+
+.notif-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: 320px;
+  max-width: 90vw;
+  max-height: 420px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--color-surface);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  box-shadow: 0 8px 24px var(--color-shadow);
+  z-index: 200;
+  text-align: left;
+}
+
+.notif-dropdown-title {
+  padding: 12px 14px;
+  font-weight: bold;
+  border-bottom: 1px solid var(--color-border);
+  flex-shrink: 0;
+}
+
+.notif-list {
+  padding: 4px 0;
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+}
+
+.notif-dropdown-footer {
+  flex-shrink: 0;
+  border-top: 1px solid var(--color-border);
+  padding: 8px;
+}
+
+.notif-view-all-btn {
+  display: block;
+  width: 100%;
+  background: none;
+  border: none;
+  color: var(--color-accent);
+  font-size: 13px;
+  font-weight: bold;
+  padding: 8px;
+  cursor: pointer;
+  border-radius: 8px;
+}
+
+.notif-view-all-btn:hover {
+  background: var(--color-bg);
+}
+
+.notif-empty {
+  padding: 20px 14px;
+  text-align: center;
+  color: var(--color-text-sub);
+  font-size: 13px;
+}
+
+.notif-item {
+  display: block;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--color-border);
+  border-left: 3px solid transparent;
+  /* リンク付きの通知（フォロー中のユーザーの新規単語帳など）は<a>タグで
+     描画されるが、他の通知(<div>)と見た目が変わらないよう、
+     リンクの既定色・下線・display:inlineを打ち消しておく */
+  color: inherit;
+  text-decoration: none;
+}
+
+.notif-item:last-child {
+  border-bottom: none;
+}
+
+.notif-item.notif-unread {
+  border-left: 3px solid var(--color-accent);
+}
+
+.notif-item-title {
+  font-weight: bold;
+  font-size: 14px;
+  margin-bottom: 2px;
+}
+
+.notif-item-body {
+  font-size: 13px;
+  color: var(--color-text-sub);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.notif-item-time {
+  margin-top: 4px;
+  font-size: 11px;
+  color: var(--color-text-sub);
+}
+
+@media (max-width: 768px) {
+  /* 画面の左右にはみ出さないよう、ヘッダーの直下に画面幅いっぱい(左右8pxの余白)で出す */
+  .notif-dropdown {
+    position: fixed;
+    top: 64px;
+    left: 8px;
+    right: 8px;
+    width: auto;
+    max-width: none;
+    max-height: calc(100vh - 80px);
+    transform: none;
+  }
+}
+
+/* ===== スマホ幅のハンバーガーメニュー（account-widgets.jsが追加） ===== */
+.vb-mobile-menu-wrap {
+  position: relative;
+  display: none;
+}
+
+.vb-mobile-menu-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  padding: 0;
+  margin: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--color-header-text);
+}
+
+.vb-mobile-menu {
+  position: fixed;
+  top: 64px;
+  right: 8px;
+  width: 240px;
+  max-width: calc(100vw - 16px);
+  background: var(--color-surface);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  box-shadow: 0 8px 24px var(--color-shadow);
+  z-index: 210;
+  overflow: hidden;
+  text-align: left;
+}
+
+.vb-menu-profile {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  border-bottom: 1px solid var(--color-border);
+  color: var(--color-text);
+  text-decoration: none;
+}
+
+.vb-menu-profile-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.vb-menu-profile-name {
+  font-weight: bold;
+  font-size: 15px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.vb-menu-profile-sub {
+  font-size: 12px;
+  font-weight: normal;
+  color: var(--color-text-sub);
+}
+
+.vb-menu-item {
+  display: block;
+  width: 100%;
+  margin: 0;
+  padding: 13px 16px;
+  border-radius: 0;
+  background: transparent;
+  color: var(--color-text);
+  text-align: left;
+  font-size: 15px;
+}
+
+.vb-menu-item + .vb-menu-item {
+  border-top: 1px solid var(--color-border);
+}
+
+.vb-menu-item:hover,
+.vb-menu-profile:hover {
+  background: var(--color-bg);
+}
+
+/* ===== プロフィール写真：トリミングモーダル（profile-editor.jsが表示） ===== */
+.cropModalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+.cropModalBox {
+  background: var(--color-surface);
+  color: var(--color-text);
+  border-radius: 12px;
+  padding: 20px;
+  width: 100%;
+  max-width: 340px;
+  box-sizing: border-box;
+  text-align: center;
+}
+
+.cropModalDesc {
+  font-size: 12px;
+  color: var(--color-text-sub);
+  margin: 4px 0 14px;
+}
+
+.cropViewport {
+  width: 260px;
+  height: 260px;
+  margin: 0 auto;
+  max-width: 100%;
+  border-radius: 50%;
+  overflow: hidden;
+  background: var(--color-bg);
+  position: relative;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+
+.cropViewport.dragging {
+  cursor: grabbing;
+}
+
+.cropViewport img {
+  position: absolute;
+  top: 0;
+  left: 0;
+  max-width: none;
+  pointer-events: none;
+}
+
+.cropZoomSlider {
+  width: 260px;
+  max-width: 100%;
+  margin: 14px auto 0;
+  display: block;
+}
+
+.cropModalActions {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 16px;
+}

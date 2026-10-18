@@ -1,0 +1,1030 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, user-scalable=yes">
+  <title>View</title>
+  <link rel="apple-touch-icon" sizes="512x512" href="./images/icon.png">
+  <link rel="icon" type="image/x-icon" href="./images/favicon.ico">
+  <link rel="stylesheet" type="text/css" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <script src="theme.js"></script>
+  <style>
+    .main {
+      flex: 1;
+    }
+
+    .card {
+      background: var(--color-surface);
+      color: var(--color-text);
+      max-width: 45%;
+      margin: 20px auto;
+      padding: 20px;
+      border-radius: 10px;
+      align-items: center;
+      min-height: 480px;
+      box-sizing: border-box;
+      position: relative;
+    }
+
+    #title {
+      text-align: center;
+      font-size: 25px;
+      margin-bottom: 10px;
+      padding: 0 46px;
+    }
+
+    .detail-info {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      text-align: center;
+      font-size: 13px;
+      color: var(--color-text-sub);
+      margin-bottom: 20px;
+      line-height: 1.6;
+    }
+
+    .detail-info a {
+      color: var(--color-accent);
+      text-decoration: underline;
+    }
+
+    .meta-row {
+      margin: 0;
+    }
+
+    #description {
+      text-align: left;
+      font-size: 14px;
+      color: var(--color-text);
+      background: var(--color-bg);
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      white-space: pre-wrap;
+    }
+
+    #btn3 {
+      display: flex;
+      align-items: center;
+      text-align: center;
+    }
+
+    a.btn {
+      background: var(--color-surface);
+      color: var(--color-accent);
+      padding: 6px 12px;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: bold;
+      border: 1px solid var(--color-accent);
+      width: 100%;
+      margin-left: 5px;
+      margin-right: 5px;
+      margin-bottom: 10px;
+      cursor: pointer;
+    }
+
+    /* 小さめのピル型ボタン。誰でも押せるので目立たせすぎず、
+       favoritersBtn(作成者のみ)と同じ並びに置く */
+    #offlineSaveBtn {
+      display: flex;
+      width: fit-content;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      margin: 0 auto 10px;
+      background: var(--color-surface);
+      color: var(--color-accent);
+      padding: 5px 14px;
+      border-radius: 999px;
+      font-weight: bold;
+      font-size: 12px;
+      font-family: inherit;
+      border: 1px solid var(--color-accent);
+      cursor: pointer;
+      transition: transform 0.15s, background-color 0.2s, color 0.2s;
+    }
+
+    #offlineSaveBtn.saved {
+      background: var(--color-accent);
+      color: var(--color-accent-text);
+    }
+
+    #offlineSaveBtn:disabled {
+      opacity: 0.7;
+      cursor: default;
+    }
+
+    #offlineSaveBtn.pulse {
+      transform: scale(1.1);
+    }
+
+    .offlineSpinner {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      border: 2px solid currentColor;
+      border-top-color: transparent;
+      border-radius: 50%;
+      animation: offlineSpin 0.6s linear infinite;
+    }
+
+    @keyframes offlineSpin {
+      to { transform: rotate(360deg); }
+    }
+
+    .word {
+      border-bottom: 1px solid var(--color-border);
+      padding: 6px 0;
+      cursor: text;
+    }
+    .wordMain {
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+      text-align: left;
+    }
+    .wordNum {
+      font-size: 12px;
+      color: var(--color-text-sub);
+      flex-shrink: 0;
+      min-width: 1.5em;
+      text-align: right;
+    }
+    /* 単語(表・裏)やヒントに改行が含まれる場合、そのまま表示に反映する */
+    .wordMain span {
+      white-space: pre-wrap;
+    }
+    .wordHint {
+      margin: 2px 0 0 calc(1.5em + 8px);
+      font-size: 12px;
+      color: var(--color-text-sub);
+      text-align: left;
+      white-space: pre-wrap;
+    }
+    .detail-info {
+      font-size: 15px;
+    }
+
+    @media (max-width: 768px) {
+      .card{
+        max-width:90%;
+      }
+      #title{
+        font-size: 20px;
+      }
+      #detailInfo{
+        font-size: 12px;
+      }
+      #words{
+        font-size: 14px;
+      }
+    }
+    #description a {
+      color: var(--color-accent);
+      text-decoration: underline;
+      word-break: break-all;
+    }
+    #words{
+      user-select: none;
+    }
+
+    #btn3{
+      user-select: none;
+    }
+
+    /* リンク扱いの範囲を文字の部分だけにする（以前は横幅いっぱいが押せる範囲になっていた） */
+    #reportLink {
+      display: none;
+      width: fit-content;
+      text-align: center;
+      margin: 4px auto 20px;
+      font-size: 12px;
+      color: var(--color-text-sub);
+      text-decoration: underline;
+      cursor: pointer;
+      background: none;
+      border: none;
+      padding: 0;
+    }
+
+    /* 作成者にだけ表示する「◯人がお気に入り登録」リンク（user.htmlのフォロワー数表示と同じ見た目） */
+    #favoritersBtn {
+      display: none;
+      width: 100%;
+      text-align: center;
+      margin: 4px 0 10px;
+      font-size: 13px;
+      color: var(--color-text-sub);
+      cursor: pointer;
+      background: none;
+      border: none;
+      padding: 0;
+    }
+
+    #favoritersBtn:hover {
+      text-decoration: underline;
+    }
+
+    #favoritersBtn strong {
+      color: var(--color-text);
+    }
+
+    .userRow {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      border: 1px solid var(--color-border);
+      border-radius: 10px;
+      padding: 10px 14px;
+      margin-bottom: 8px;
+    }
+
+    .userRow a.userLink {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: var(--color-text);
+      text-decoration: none;
+      flex: 1;
+      min-width: 0;
+      overflow-wrap: anywhere;
+    }
+
+    .emptyMsg {
+      color: var(--color-text-sub);
+      font-size: 14px;
+      text-align: center;
+      padding: 10px 0;
+    }
+
+    .modalOverlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      padding: 20px;
+      box-sizing: border-box;
+    }
+
+    .modalBox {
+      background: var(--color-surface);
+      color: var(--color-text);
+      border-radius: 12px;
+      padding: 25px;
+      width: 100%;
+      max-width: 460px;
+      max-height: 80vh;
+      overflow-y: auto;
+      text-align: left;
+    }
+
+    .modalDesc {
+      font-size: 13px;
+      color: var(--color-text-sub);
+      margin-bottom: 10px;
+    }
+
+    .modalActions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      margin-top: 15px;
+    }
+
+    #reportReason {
+      width: 100%;
+      box-sizing: border-box;
+      height: 100px;
+      padding: 12px;
+      border-radius: 10px;
+      border: 1px solid var(--color-border);
+      font-size: 14px;
+      font-family: inherit;
+      resize: vertical;
+    }
+
+    .notice {
+      color: var(--color-danger);
+      min-height: 1.2em;
+      font-size: 13px;
+    }
+
+    .success {
+      color: var(--color-success);
+      min-height: 1.2em;
+      font-size: 13px;
+    }
+
+    /* お気に入りボタン：カード右上に浮かせた丸いアイコンボタンにする
+       (行動ボタン列に混ぜると長い単語帳タイトルの隣で違和感があったため、
+       ブックマーク/お気に入りアイコンとして馴染みやすいカード隅の配置に変更) */
+    #favoriteBtn {
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      width: 40px;
+      height: 40px;
+      padding: 0;
+      border-radius: 50%;
+      border: 1px solid var(--color-border);
+      background: var(--color-surface);
+      color: var(--color-danger);
+      font-size: 20px;
+      line-height: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 2px 6px var(--color-shadow);
+      margin: 0;
+    }
+
+    #favoriteBtn.active {
+      background: var(--color-danger);
+      color: #fff;
+      border-color: var(--color-danger);
+    }
+
+    @media (max-width: 768px) {
+      #favoriteBtn {
+        top: 10px;
+        right: 10px;
+        width: 36px;
+        height: 36px;
+        font-size: 18px;
+      }
+
+      #title {
+        padding: 0 40px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <header>
+    <p class="headertitle"><a href="index.html"><img src="./images/rogo.png" height="70vh"></a></p>
+    <div id="status" style="display:none">ログイン確認中...</div>
+    <div>
+      <span id="notifBellContainer"></span>
+      <button id="settingsBtn" class="header-btn" style="display:none"
+        onclick="window.goPage('settings.html')">設定</button>
+      <button id="loginBtn" class="header-btn" onclick="location.href='login.html'">ログイン</button>
+      <button id="logoutBtn" class="header-btn" style="display:none" onclick="window.logout()">ログアウト</button>
+    </div>
+  </header>
+  <div class="main">
+    <div class="card">
+      <button type="button" id="favoriteBtn" title="お気に入り" onclick="toggleFavorite()">♡</button>
+      <h2 id="title"></h2>
+      <div id="detailInfo" class="detail-info"></div>
+      <button type="button" id="favoritersBtn" onclick="openFavoritersModal()"></button>
+      <button type="button" id="offlineSaveBtn" onclick="toggleOfflineSave()"></button>
+      <button type="button" id="reportLink" onclick="openReportModal()">この単語帳を報告する</button>
+      <div id="description" style="display:none"></div>
+      <div id="btn3">
+        <a class="btn" id="editBtn" style="display:none">編集</a>
+        <a class="btn" id="flashBtn" onclick="goStudy('flash.html')">暗記</a>
+        <a class="btn" id="testBtn" onclick="goStudy('test.html')">テスト</a>
+      </div>
+      <div id="words"></div>
+    </div>
+  </div>
+
+  <div id="reportModal" class="modalOverlay" style="display:none;">
+    <div class="modalBox">
+      <h3>この単語帳を報告する</h3>
+      <p class="modalDesc">通報内容は運営にのみ共有されます。通報理由を入力してください（必須）。</p>
+      <textarea id="reportReason" placeholder="例：不適切な内容が含まれている、スパム など"></textarea>
+      <div id="reportMsg" class="notice"></div>
+      <div class="modalActions">
+        <button type="button" onclick="closeReportModal()">キャンセル</button>
+        <button type="button" id="reportSubmitBtn" onclick="submitReport()">通報する</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="favoritersModal" class="modalOverlay" style="display:none;">
+    <div class="modalBox">
+      <h3>お気に入りした人</h3>
+      <div id="favoritersList"><p class="emptyMsg">読み込み中...</p></div>
+      <div class="modalActions">
+        <button type="button" onclick="closeFavoritersModal()">閉じる</button>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <div class="footer-inner">
+      <div><img src="./images/rogo.png" height="70vh"></div>
+      <div class="footer-links">
+        <a href="index.html">ホーム</a>
+        <a href="list.html">検索</a>
+        <a href="create.html">作成</a>
+        <a href="favorites.html">お気に入り</a>
+        <a href="settings.html">設定</a>
+        <a href="update.html">更新履歴</a>
+        <a href="offline/index.html">オフライン</a>
+        <a href="contact.html">お問い合わせ</a>
+      </div>
+      <div class="copy">© 2026 TEAM-Minimal, Shiratae</div>
+    </div>
+  </footer>
+
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <!-- 単語帳の描画処理がVOCABOOST_AVATAR_HTML等を使うため、共通スクリプトはメインスクリプトより先に読み込む
+       （Firestoreのキャッシュから即座にデータが返ると、後から読み込んでいた場合に未定義エラーになっていた） -->
+  <script src="offline-storage.js"></script>
+  <script src="account-widgets.js?v=20260930"></script>
+
+  <script>
+    // 他ページと同じFirebase SDK(compatビルド, 9.23.0)で統一する。
+    // 以前このページだけ別バージョンのSDK(modularビルド, 11.8.1)で独自にinitializeAppしていたため、
+    // 他ページ(compat 9.23.0)とは別のFirebase Auth/Firestoreインスタンスが動作しており、
+    // 同じアカウントの認証状態の同期がずれて勝手にログアウト扱いになってしまう不具合の原因になっていた
+    // （view.htmlは単語帳を開くたびに表示される最も閲覧数の多いページのため、影響が大きかった）。
+    const firebaseConfig = { apiKey: "AIzaSyD7CJmO3eAO0o2EPRDsVqTtZ_whRd_3-3E", authDomain: "quiz1-4ffdc.firebaseapp.com", projectId: "quiz1-4ffdc", storageBucket: "quiz1-4ffdc.firebasestorage.app", messagingSenderId: "152062126332", appId: "1:152062126332:web:845af237a1a76207214f79" };
+
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    const id = new URLSearchParams(location.search).get("id");
+    const cacheKey = `book_${id}`;
+    let owner;
+    let offlineWords = [];
+    let currentUser = null;
+
+    // edit.htmlで保存した後history.back()でこのページに戻ってくると、ブラウザの
+    // bfcache(back/forwardキャッシュ)によりスクリプトを再実行せず編集前の
+    // DOMがそのまま復元され、一瞬だけ古い内容の単語帳が表示されてしまうことが
+    // あった。bfcacheから復元された場合は最新データで確実に再描画されるよう
+    // ページを再読み込みする。
+    window.addEventListener("pageshow", (event) => {
+      if (event.persisted) {
+        location.reload();
+      }
+    });
+
+    const statusDiv = document.getElementById("status");
+    const loginBtn = document.getElementById("loginBtn");
+    const logoutBtn = document.getElementById("logoutBtn");
+    const settingsBtn = document.getElementById("settingsBtn");
+
+    const savedUser =
+      JSON.parse(localStorage.getItem("cachedUser"));
+
+    if (savedUser) {
+      settingsBtn.style.display = "inline-block";
+      logoutBtn.style.display = "inline-block";
+      loginBtn.style.display = "none";
+    }
+
+    window.goPage = (page) => {
+      if (page === "index.html") {
+        location.href = "index.html";
+        return;
+      }
+      const hasCachedUser = !!localStorage.getItem("cachedUser");
+      if (currentUser || hasCachedUser) {
+        location.href = page;
+      } else {
+        alert("ログインしてください");
+        location.href = "login.html";
+      }
+    };
+
+    window.logout = () => {
+
+      localStorage.removeItem("cachedUser");
+
+      auth.signOut();
+    };
+
+    // キャッシュがあれば先に表示
+    const cachedBook = localStorage.getItem(cacheKey);
+
+    if (cachedBook) {
+      try {
+        const data = JSON.parse(cachedBook);
+
+        document.getElementById("title").textContent = data.title || "";
+        document.getElementById("detailInfo").innerHTML = data.detailHtml || "";
+        document.getElementById("words").innerHTML = data.wordsHtml || "";
+
+        if (data.descriptionHtml) {
+          const desc = document.getElementById("description");
+          desc.innerHTML = data.descriptionHtml;
+          desc.style.display = "block";
+        }
+
+        // 自分の単語帳なら編集ボタンを即表示
+        const savedUser =
+          JSON.parse(localStorage.getItem("cachedUser"));
+
+        if (
+          savedUser &&
+          data.owner &&
+          savedUser.uid === data.owner
+        ) {
+          const editBtn = document.getElementById("editBtn");
+
+          editBtn.style.display = "inline";
+          editBtn.href = `edit.html?id=${id}`;
+        }
+
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    // 単語帳情報を先に取得
+    (async function () {
+    const bookSnap = await db.collection("wordbooks").doc(id).get();
+
+    // 単語一覧：並び替え(order)フィールドで取得する。
+    // まだ並び替え機能導入前（orderフィールド未付与）の単語帳では
+    // 該当クエリの結果が空になるため、その場合は作成日時順にフォールバックする
+    let wSnap = await db.collection("wordbooks").doc(id).collection("words").orderBy("order").get();
+
+    if (wSnap.empty) {
+      wSnap = await db.collection("wordbooks").doc(id).collection("words").orderBy("createdAt").get();
+    }
+
+    if (!bookSnap.exists) {
+      alert("単語帳が見つかりません");
+      location.href = "index.html";
+      return;
+    }
+
+    const book = bookSnap.data();
+    owner = book.owner;
+
+    document.getElementById("title").textContent = book.title;
+
+    // XSS対策: テキストをそのまま innerHTML に差し込まないようにエスケープする
+    function escapeHtml(str) {
+      return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    // 作成者の写真：未ログインの閲覧者は users コレクションを読み取れない
+    // （Firestoreルールでログイン必須のため）ので、ownerNameと同様に
+    // wordbookドキュメント側に複製されたownerPhotoURLをそのまま使う。
+    const ownerPhotoURL = book.ownerPhotoURL || null;
+
+    // 詳細情報：作成者は外枠付きボタン風リンク、それ以外はテキストで表示する
+    let creatorHtml = "";
+    if (book.ownerName) {
+      creatorHtml = `
+        <a href="user.html?id=${owner}" class="creator-btn">
+          ${window.VOCABOOST_AVATAR_HTML(ownerPhotoURL, 24, book.ownerCohort)}
+          <span>${escapeHtml(book.ownerName)}</span>
+        </a>
+      `;
+    }
+
+    const metaParts = [];
+
+    const updateDate =
+      book.updatedAt
+        ? book.updatedAt.toDate()
+        : (book.createdAt ? book.createdAt.toDate() : null);
+
+    if (updateDate) {
+      const y = updateDate.getFullYear();
+      const m = updateDate.getMonth() + 1;
+      const d = updateDate.getDate();
+
+      metaParts.push(`最終更新: ${y}/${m}/${d}`);
+    }
+
+    if (book.wordCount !== undefined) {
+      metaParts.push(`計 ${Number(book.wordCount) || 0} 単語`);
+    }
+
+    const metaHtml = metaParts.length
+      ? `<div class="meta-row">${metaParts.join(" | ")}</div>`
+      : "";
+
+    document.getElementById("detailInfo").innerHTML = creatorHtml + metaHtml;
+
+    const descDiv = document.getElementById("description");
+
+    if (book.description) {
+
+      // 説明文はユーザー入力のため、必ず先にエスケープしてからURL部分だけをリンクにする
+      // （以前はエスケープしておらず、説明文にHTMLを書くと閲覧者の画面でスクリプトが動いてしまっていた）
+      const linkedText = escapeHtml(book.description).replace(
+        /(https?:\/\/[^\s<]+)/g,
+        (url) => {
+
+          const internalPrefix =
+            "https://minimal41.github.io/vocaboost/view.html";
+
+          if (url.startsWith(internalPrefix)) {
+            return `<a href="${url}">${url}</a>`;
+          }
+
+          return `<a href="${url}" target="_blank" rel="noopener noreferrer">${url}</a>`;
+        }
+      );
+
+      descDiv.innerHTML = linkedText;
+      descDiv.style.display = "block";
+    } else {
+      // 説明文が削除された場合、古い内容がDOMやキャッシュに残らないようクリアする
+      descDiv.innerHTML = "";
+      descDiv.style.display = "none";
+    }
+
+    const wordsDiv = document.getElementById("words");
+
+    let wordsHtml = "";
+
+    let wordNo = 0;
+    wSnap.forEach(d => {
+      const data = d.data();
+      wordNo++;
+
+      const hintHtml = data.hint
+        ? `<div class="wordHint">ヒント: ${escapeHtml(data.hint)}</div>`
+        : "";
+
+      wordsHtml += `
+        <div class="word">
+          <div class="wordMain">
+            <span class="wordNum">${wordNo}.</span>
+            <span>${escapeHtml(data.front)} - ${escapeHtml(data.back)}</span>
+          </div>
+          ${hintHtml}
+        </div>
+      `;
+
+      offlineWords.push({
+        front: data.front || "",
+        hint: data.hint || "",
+        back: data.back || "",
+        note: data.note || ""
+      });
+    });
+
+    wordsDiv.innerHTML = wordsHtml;
+
+    // オフラインに保存済みの単語帳は、内容が更新されていれば裏で保存し直しておく
+    // （id/タイトル/単語が変わっても、次にオフラインページを開いたときに古い内容のままにならないように）
+    if (window.VOCABOOST_IS_OFFLINE_SAVED && window.VOCABOOST_IS_OFFLINE_SAVED(id)) {
+      window.VOCABOOST_SAVE_OFFLINE_BOOK({
+        id,
+        title: book.title,
+        description: book.description || "",
+        ownerName: book.ownerName || "",
+        words: offlineWords
+      });
+    }
+    updateOfflineSaveButton();
+
+    // 最新データをキャッシュ保存。容量超過(QuotaExceededError)などで失敗しても、
+    // この後に続く編集ボタン表示(onAuthStateChanged)やgoStudyの定義が
+    // 止まってしまわないようtry/catchで保護する。
+    try {
+      localStorage.setItem(
+        cacheKey,
+        JSON.stringify({
+          owner: owner,
+          title: book.title,
+          detailHtml: document.getElementById("detailInfo").innerHTML,
+          descriptionHtml: document.getElementById("description").innerHTML,
+          wordsHtml
+        })
+      );
+    } catch (e) {
+      console.warn("単語帳のキャッシュ保存に失敗しました(表示には影響しません)", e);
+    }
+
+    window.goStudy = (page) => {
+      if (currentUser) {
+        location.href = `${page}?id=${id}`;
+      } else {
+        const redirect = `${page}?id=${id}`;
+        location.href = `login.html?redirect=${encodeURIComponent(redirect)}`;
+      }
+    };
+
+    function handleSignedOut() {
+      // cachedUserは明示的なログアウト操作(logout())でのみ削除する
+      // (ここで消すと、次に一時的にnullが発火した際の再確認猶予が効かなくなるため)
+      statusDiv.textContent = "ログアウト中";
+      loginBtn.style.display = "inline-block";
+      logoutBtn.style.display = "none";
+      settingsBtn.style.display = "none";
+    }
+
+    // Firebaseが端末に保存された認証状態を復元し終える前に、onAuthStateChangedが
+    // 一時的にnullで発火することがある。ログイン中のキャッシュ(cachedUser)が
+    // 残っている場合は即座にログアウト扱いにせず、少し待ってから本当に
+    // 未ログインのままかを再確認する（実際はログインしたままなのに一瞬
+    // ログアウト状態の表示になってしまう不具合を防ぐため）。
+    auth.onAuthStateChanged(user => {
+      currentUser = user;
+
+      if (user) {
+
+        try {
+          localStorage.setItem(
+            "cachedUser",
+            JSON.stringify({
+              uid: user.uid
+            })
+          );
+        } catch (e) {
+          console.warn("ログイン状態のキャッシュ保存に失敗しました", e);
+        }
+        statusDiv.textContent = "ログイン中: " + user.uid;
+        loginBtn.style.display = "none";
+        logoutBtn.style.display = "inline-block";
+        settingsBtn.style.display = "inline-block";
+
+        if (user.uid === owner) {
+          const editBtn = document.getElementById("editBtn");
+          editBtn.style.display = "inline";
+          editBtn.href = `edit.html?id=${id}`;
+          loadFavoriters();
+        } else {
+          document.getElementById("reportLink").style.display = "block";
+        }
+
+        loadFavoriteState(user.uid);
+      } else if (localStorage.getItem("cachedUser")) {
+        (function () {
+          // 端末やネットワークが遅いと1回・1.5秒の再確認だけでは間に合わないことがあるため、
+          // 間隔を広げながら最大4回(合計15秒)まで再確認してから本当に未ログインと判断する。
+          const delays = [1000, 2000, 4000, 8000];
+          const recheck = (i) => {
+            setTimeout(() => {
+              if (auth.currentUser) return;
+              if (i + 1 < delays.length) recheck(i + 1);
+              else {
+                handleSignedOut();
+                if (window.VOCABOOST_SHOW_SESSION_LOST_NOTICE) {
+                  window.VOCABOOST_SHOW_SESSION_LOST_NOTICE(!navigator.onLine);
+                }
+              }
+            }, delays[i]);
+          };
+          recheck(0);
+        })();
+      } else {
+        handleSignedOut();
+      }
+    });
+
+    // ===== お気に入り =====
+    // users/{uid}.favoriteBookIds に単語帳IDの配列として保存する
+    // （通知の既読ID(readNotificationIds)と同様の、配列フィールドで持たせる方式）。
+    let favoriteBookIds = [];
+
+    async function loadFavoriteState(uid) {
+      try {
+        const snap = await db.collection("users").doc(uid).get();
+        favoriteBookIds = (snap.exists && snap.data().favoriteBookIds) || [];
+      } catch (e) {
+        console.error("お気に入り状態の取得に失敗しました", e);
+        favoriteBookIds = [];
+      }
+      updateFavoriteButton();
+    }
+
+    function updateFavoriteButton() {
+      const btn = document.getElementById("favoriteBtn");
+      if (!btn) return;
+      const isFav = favoriteBookIds.includes(id);
+      btn.classList.toggle("active", isFav);
+      btn.textContent = isFav ? "♥" : "♡";
+      btn.title = isFav ? "お気に入り済み（クリックで解除）" : "お気に入りに追加";
+    }
+
+    // ===== オフライン保存 =====
+    // 電波の無い環境でも暗記・テストができるよう、単語帳の内容をlocalStorageに保存する
+    // （offline-storage.jsを共通で利用。ログイン状態に関わらず誰でも使える）。
+    function updateOfflineSaveButton() {
+      const btn = document.getElementById("offlineSaveBtn");
+      if (!btn || !window.VOCABOOST_IS_OFFLINE_SAVED) return;
+      const saved = window.VOCABOOST_IS_OFFLINE_SAVED(id);
+      btn.innerHTML = saved ? "✓ オフライン保存済み" : "オフラインに保存";
+      btn.classList.toggle("saved", saved);
+    }
+
+    // 保存/解除自体は瞬時に終わる処理だが、押した操作がちゃんと反映されたと
+    // 分かるよう、ボタンを一瞬disabledにしてスピナー→完了時にパルスさせる
+    // 簡単な「保存中」エフェクトを付ける。
+    window.toggleOfflineSave = function () {
+      if (!window.VOCABOOST_IS_OFFLINE_SAVED) return;
+      const btn = document.getElementById("offlineSaveBtn");
+      const saved = window.VOCABOOST_IS_OFFLINE_SAVED(id);
+
+      btn.disabled = true;
+      btn.innerHTML = `<span class="offlineSpinner"></span>${saved ? "解除中..." : "保存中..."}`;
+
+      setTimeout(() => {
+        if (saved) {
+          window.VOCABOOST_REMOVE_OFFLINE_BOOK(id);
+        } else {
+          window.VOCABOOST_SAVE_OFFLINE_BOOK({
+            id,
+            title: document.getElementById("title").textContent,
+            words: offlineWords
+          });
+        }
+        btn.disabled = false;
+        updateOfflineSaveButton();
+        btn.classList.add("pulse");
+        setTimeout(() => btn.classList.remove("pulse"), 250);
+      }, 350);
+    };
+
+    // ===== お気に入りした人一覧（作成者のみ） =====
+    // favoriteBookIdsにこの単語帳IDを含むユーザーを検索して求める
+    // （account-widgets.jsのVOCABOOST_FETCH_FAVORITERSを共通で利用する）。
+    let favoriters = [];
+
+    function escapeHtmlForFavoriters(str) {
+      return String(str == null ? "" : str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    async function loadFavoriters() {
+      const btn = document.getElementById("favoritersBtn");
+      if (!btn) return;
+      try {
+        favoriters = await window.VOCABOOST_FETCH_FAVORITERS(db, id);
+        btn.innerHTML = `<strong>${favoriters.length}</strong>人がお気に入り登録`;
+        btn.style.display = "block";
+      } catch (e) {
+        console.error("お気に入りした人一覧の取得に失敗しました", e);
+      }
+    }
+
+    window.openFavoritersModal = function () {
+      const listEl = document.getElementById("favoritersList");
+      if (favoriters.length === 0) {
+        listEl.innerHTML = `<p class="emptyMsg">お気に入りした人はいません</p>`;
+      } else {
+        listEl.innerHTML = favoriters.map(u => `
+          <div class="userRow">
+            <a class="userLink" href="user.html?id=${encodeURIComponent(u.id)}">
+              ${window.VOCABOOST_AVATAR_HTML(u.photoURL, 36, u.cohort ?? window.VOCABOOST_COHORT_FROM_EMAIL(u.email))}
+              <span>${escapeHtmlForFavoriters(u.username || "名無し")}</span>
+            </a>
+          </div>
+        `).join("");
+      }
+      document.getElementById("favoritersModal").style.display = "flex";
+    };
+
+    window.closeFavoritersModal = function () {
+      document.getElementById("favoritersModal").style.display = "none";
+    };
+
+    window.toggleFavorite = async () => {
+      if (!currentUser) {
+        const redirect = `view.html?id=${id}`;
+        location.href = `login.html?redirect=${encodeURIComponent(redirect)}`;
+        return;
+      }
+
+      const isFav = favoriteBookIds.includes(id);
+
+      try {
+        await db.collection("users").doc(currentUser.uid).set({
+          favoriteBookIds: isFav
+            ? firebase.firestore.FieldValue.arrayRemove(id)
+            : firebase.firestore.FieldValue.arrayUnion(id)
+        }, { merge: true });
+
+        favoriteBookIds = isFav
+          ? favoriteBookIds.filter(x => x !== id)
+          : favoriteBookIds.concat([id]);
+
+        updateFavoriteButton();
+
+        // お気に入りに追加した（解除ではない）ときだけ、単語帳の作成者に通知する
+        if (!isFav && owner && window.VOCABOOST_NOTIFY_FAVORITED) {
+          try {
+            const mySnap = await db.collection("users").doc(currentUser.uid).get();
+            const myName = (mySnap.exists && mySnap.data().username) || "名無し";
+            const title = document.getElementById("title").textContent;
+            window.VOCABOOST_NOTIFY_FAVORITED(db, currentUser.uid, myName, owner, id, title);
+          } catch (e) {
+            console.error("お気に入り通知の送信に失敗しました", e);
+          }
+        }
+      } catch (e) {
+        console.error(e);
+        alert("お気に入りの更新に失敗しました");
+      }
+    };
+
+    window.openReportModal = () => {
+      if (!currentUser) {
+        alert("ログインしてください");
+        return;
+      }
+      document.getElementById("reportReason").value = "";
+      document.getElementById("reportMsg").textContent = "";
+      document.getElementById("reportMsg").className = "notice";
+      document.getElementById("reportSubmitBtn").disabled = false;
+      document.getElementById("reportModal").style.display = "flex";
+    };
+
+    window.closeReportModal = () => {
+      document.getElementById("reportModal").style.display = "none";
+    };
+
+    window.submitReport = async () => {
+      // 送信中・送信済みは受け付けない（連打で同じ通報が何件も送られていたため）
+      const submitBtn = document.getElementById("reportSubmitBtn");
+      if (submitBtn.disabled) return;
+      const reason = document.getElementById("reportReason").value.trim();
+      const msg = document.getElementById("reportMsg");
+
+      if (!reason) {
+        msg.className = "notice";
+        msg.textContent = "通報理由を入力してください";
+        return;
+      }
+      if (!currentUser) {
+        msg.className = "notice";
+        msg.textContent = "ログインしてください";
+        return;
+      }
+
+      submitBtn.disabled = true;
+      msg.className = "notice";
+      msg.textContent = "送信しています...";
+
+      try {
+        await db.collection("reports").add({
+          type: "wordbook",
+          targetId: id,
+          targetLabel: book.title || "",
+          reason: reason,
+          reportedBy: currentUser.uid,
+          reportedByEmail: currentUser.email || "",
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+
+        // 運営のヘッダー通知ベルにだけ届く通知（通報理由の中身は含めない）
+        try {
+          await db.collection("notifications").add({
+            title: "新しい通報があります",
+            body: `単語帳「${book.title || "(無題)"}」が通報されました`,
+            target: "admin",
+            targetUserIds: [],
+            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+            createdBy: currentUser.uid
+          });
+        } catch (e) {
+          console.error("admin notification failed", e);
+        }
+
+        msg.className = "success";
+        msg.textContent = "通報しました。ご協力ありがとうございます。";
+        setTimeout(() => { window.closeReportModal(); }, 1200);
+      } catch (e) {
+        console.error(e);
+        msg.className = "notice";
+        msg.textContent = "送信に失敗しました: " + e.message;
+        submitBtn.disabled = false;
+      }
+    };
+    })();
+  </script>
+  <script src="analytics-tracker.js"></script>
+</body>
+
+</html>

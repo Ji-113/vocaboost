@@ -1,0 +1,821 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, user-scalable=yes">
+  <title>検索</title>
+  <link rel="apple-touch-icon" sizes="512x512" href="./images/icon.png">
+  <link rel="icon" type="image/x-icon" href="./images/favicon.ico">
+  <link rel="stylesheet" type="text/css" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <script src="theme.js"></script>
+  <style>
+    .tabArea {
+      margin-bottom: 15px;
+    }
+
+    .tab {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 10px;
+      margin: 0 5px;
+      cursor: pointer;
+      font-size: 15px;
+    }
+
+    .active {
+      background: var(--color-accent);
+      color: var(--color-accent-text);
+    }
+
+    .inactive {
+      background: var(--color-border);
+      color: var(--color-text);
+    }
+
+    input {
+      padding: 10px;
+      border-radius: 10px;
+      border: 1px solid #ccc;
+      font-size: 14px;
+      width: 100%;
+      max-width: 300px;
+      box-sizing: border-box;
+    }
+
+    @media (max-width: 768px) {
+      .card {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+      }
+
+      .card button {
+        align-self: flex-end;
+      }
+
+      div[style*="margin-bottom:15px;"] {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        align-items: center;
+      }
+
+      input,
+      select {
+        width: 100% !important;
+        max-width: none !important;
+        margin: 0 !important;
+      }
+    }
+
+    .card {
+      background: var(--color-surface);
+      color: var(--color-text);
+      padding: 20px;
+      border-radius: 12px;
+      margin-bottom: 15px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      text-align: left;
+      max-width: 600px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .title {
+      font-size: 18px;
+      font-weight: bold;
+    }
+
+    .book-meta-row {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin: 6px 0;
+    }
+
+    .book-meta-row .creator-btn {
+      font-size: 13px;
+    }
+
+    /* ユーザー一覧：枠なしで写真+名前だけを表示する（カードの白背景に馴染ませる） */
+    .user-identity {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--color-text) !important;
+      text-decoration: none !important;
+      font-size: 18px;
+      font-weight: bold;
+    }
+
+    .count {
+      font-size: 13px;
+      color: var(--color-text);
+    }
+
+    /* スマホ幅：パソコン版と同じく名前・作成者などを左寄せにし、ボタンだけ右下に置く。
+       （上の@media内の.card指定は、後に書かれている基本の.card指定で
+       align-items:center に上書きされて中央寄せになっていたため、ここで改めて指定する） */
+    @media (max-width: 768px) {
+      .card {
+        align-items: stretch;
+      }
+
+      .card > div:first-child {
+        width: 100%;
+        min-width: 0;
+        text-align: left;
+      }
+    }
+
+    .listFooter {
+      text-align: center;
+      margin: 10px 0 20px;
+    }
+
+    #searchBtn {
+      padding: 10px 16px;
+      margin-left: 5px;
+    }
+
+    .user-meta-row {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 4px;
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <p class="headertitle"><a href="index.html"><img src="./images/rogo.png" height="70vh"></a></p>
+    <div id="status" style="display:none">ログイン確認中...</div>
+    <div>
+      <span id="notifBellContainer"></span>
+      <button id="settingsBtn" class="header-btn" style="display:none" onclick="goPage('settings.html')">設定</button>
+      <button id="loginBtn" class="header-btn" onclick="location.href='login.html'">ログイン</button>
+      <button id="logoutBtn" class="header-btn" style="display:none" onclick="logout()">ログアウト</button>
+    </div>
+  </header>
+
+  <main>
+    <div class="tabArea">
+      <button id="bookTab" class="tab active" onclick="showBooks()">単語帳</button>
+      <button id="userTab" class="tab inactive" onclick="showUsers()">ユーザー</button>
+    </div>
+
+    <div style="margin-bottom:15px;">
+      <input id="search" placeholder="タイトル・ユーザー名で検索" enterkeyhint="search"
+        oninput="onSearchInput()" onkeydown="if (event.key === 'Enter' && !event.isComposing) applySearch()">
+      <button type="button" id="searchBtn" onclick="applySearch()">検索</button>
+      <select id="cohortFilter" onchange="onCohortFilterChange()"
+        style="padding:10px; border-radius:10px; border:1px solid #ccc; font-size:14px; margin-left:5px; cursor:pointer;">
+        <option value="all">すべての学年</option>
+      </select>
+      <select id="sortBook" onchange="onSortChange()"
+        style="padding:10px; border-radius:10px; border:1px solid #ccc; font-size:14px; margin-left:5px; cursor:pointer;">
+        <option value="created">作成順（新しい）</option>
+        <option value="name">名称順</option>
+        <option value="count">単語数順</option>
+      </select>
+      <select id="sortUser" onchange="onSortChange()" style="display:none;
+        padding:10px; border-radius:10px; border:1px solid #ccc; font-size:14px; margin-left:5px; cursor:pointer;">
+        <option value="count">作成した単語帳数順</option>
+        <option value="created">登録順（新しい）</option>
+        <option value="name">名称順</option>
+      </select>
+    </div>
+
+    <div id="list" style="position: relative; min-height: 200px;">
+      <div id="loading-overlay">
+        <div class="spinner"></div>
+        <div class="loading-text">読み込み中...</div>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+      <div><img src="./images/rogo.png" height="70vh"></div>
+      <div class="footer-links">
+        <a href="index.html">ホーム</a>
+        <a href="list.html">検索</a>
+        <a href="create.html">作成</a>
+        <a href="favorites.html">お気に入り</a>
+        <a href="settings.html">設定</a>
+        <a href="update.html">更新履歴</a>
+        <a href="contact.html">お問い合わせ</a>
+      </div>
+      <div class="copy">© 2026 TEAM-Minimal, Shiratae</div>
+    </div>
+  </footer>
+
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+  <!-- キャッシュからの単語帳一覧を即時描画する処理がVOCABOOST_AVATAR_HTMLを使うため、
+       account-widgets.js は下のメインスクリプトより先に読み込む -->
+  <script src="account-widgets.js?v=20260930"></script>
+  <script src="analytics-tracker.js"></script>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyD7CJmO3eAO0o2EPRDsVqTtZ_whRd_3-3E",
+      authDomain: "quiz1-4ffdc.firebaseapp.com",
+      projectId: "quiz1-4ffdc",
+      storageBucket: "quiz1-4ffdc.firebasestorage.app",
+      messagingSenderId: "152062126332",
+      appId: "1:152062126332:web:845af237a1a76207214f79"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    let mode = "book"; // book / user
+    let currentUser = null;
+
+    /* ===== 一覧の読み込み方針（Firestoreの読み取り回数を抑えるため） =====
+       以前は開くたびに公開単語帳・ユーザーを全件読み込んでいて、読み取り回数が
+       無料枠を大きく超えていた。今は
+        - 並び順・学年の絞り込みはFirestoreのクエリで行い、PAGE_SIZE件ずつ読み込む（「もっと見る」で続き）
+        - タイトル・ユーザー名の検索は、各ドキュメントに保存した検索用キー(searchKeys)で
+          サーバー側から探す（検索ボタン/Enterで実行）
+        - 1ページ目は数分間このタブ内で使い回す（sessionStorage）
+       ようにしている。 */
+    const PAGE_SIZE = 30;
+    const SEARCH_PAGE_SIZE = 60;
+    const SEARCH_FALLBACK_SIZE = 200;
+    const LIST_CACHE_TTL = 5 * 60 * 1000;
+
+    const states = {
+      book: { key: null, items: [], lastDoc: null, hasMore: false, loading: false, fromCache: false, fallback: false, error: "" },
+      user: { key: null, items: [], lastDoc: null, hasMore: false, loading: false, fromCache: false, fallback: false, error: "" }
+    };
+    let appliedSearch = ""; // 検索ボタン/Enterで確定した検索語
+
+    /* ===== 学年(期)での絞り込み =====
+       標準では自分の期を表示する（未ログインなら「すべての学年」）。 */
+    const MY_COHORT_KEY = "vocaboost_my_cohort";
+    let cohortFilter = "all";
+    let cohortFilterTouched = false; // ユーザーが自分で選び直したら自動では切り替えない
+
+    function readMyCohortCache() {
+      try {
+        const v = localStorage.getItem(MY_COHORT_KEY);
+        return v === null ? null : Number(v);
+      } catch (e) {
+        return null;
+      }
+    }
+
+    // 選択肢は「すべての学年」＋41〜43期（常に表示）＋44期以降はアカウントが存在する期のみ
+    // （新しい順）＋自分の期＋「その他」
+    const ALWAYS_SHOWN_COHORTS = [41, 42, 43];
+    const EXISTING_COHORTS_KEY = "vocaboost_existing_cohorts";
+    let existingCohorts = [];
+    try {
+      const saved = JSON.parse(localStorage.getItem(EXISTING_COHORTS_KEY) || "null");
+      if (saved && Array.isArray(saved.list)) existingCohorts = saved.list;
+    } catch (e) { }
+
+    // 44期以降のアカウントが存在するかを1件ずつだけ確認する（結果は1日保存）
+    async function checkExistingCohorts() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(EXISTING_COHORTS_KEY) || "null");
+        if (saved && Date.now() - saved.checkedAt < 24 * 60 * 60 * 1000) return;
+      } catch (e) { }
+      const maxCohort = new Date().getFullYear() - 2023 + 41;
+      const found = [];
+      for (let c = 44; c <= maxCohort; c++) {
+        try {
+          const snap = await db.collection("users").where("cohort", "==", c).limit(1).get();
+          if (!snap.empty) found.push(c);
+        } catch (e) {
+          return; // 未ログインなどで確認できないときは何もしない
+        }
+      }
+      existingCohorts = found;
+      try {
+        localStorage.setItem(EXISTING_COHORTS_KEY, JSON.stringify({ checkedAt: Date.now(), list: found }));
+      } catch (e) { }
+      renderCohortOptions();
+    }
+
+    function renderCohortOptions() {
+      const select = document.getElementById("cohortFilter");
+      const set = new Set(ALWAYS_SHOWN_COHORTS.concat(existingCohorts));
+      states.book.items.forEach(b => {
+        if (b.ownerCohort !== undefined && b.ownerCohort !== null) set.add(window.VOCABOOST_NORMALIZE_COHORT(b.ownerCohort));
+      });
+      states.user.items.forEach(u => set.add(window.VOCABOOST_NORMALIZE_COHORT(u.cohort)));
+      const myCohort = readMyCohortCache();
+      if (myCohort !== null) set.add(window.VOCABOOST_NORMALIZE_COHORT(myCohort));
+      if (cohortFilter !== "all") set.add(window.VOCABOOST_NORMALIZE_COHORT(cohortFilter));
+
+      // 学年として有効なのは41期〜今年の期のみ（それ以外は「その他」に含める）
+      const other = window.VOCABOOST_COHORT_OTHER;
+      const maxCohort = new Date().getFullYear() - 2023 + 41;
+      const isValid = c => Number.isInteger(c) && c >= 41 && c <= maxCohort;
+      const list = [...set].filter(isValid).sort((a, b) => b - a);
+      list.push(other);
+
+      select.innerHTML = '<option value="all">すべての学年</option>' + list.map(c => {
+        const mine = myCohort !== null && window.VOCABOOST_NORMALIZE_COHORT(myCohort) === c ? "（自分の学年）" : "";
+        return `<option value="${c}">${escapeHtml(window.VOCABOOST_COHORT_LABEL(c) + mine)}</option>`;
+      }).join("");
+      select.value = cohortFilter;
+    }
+
+    function onCohortFilterChange() {
+      cohortFilterTouched = true;
+      cohortFilter = document.getElementById("cohortFilter").value;
+      loadList(true);
+    }
+
+    function applyDefaultCohortFilter() {
+      if (cohortFilterTouched) return false;
+      const myCohort = readMyCohortCache();
+      const next = myCohort === null ? "all" : String(window.VOCABOOST_NORMALIZE_COHORT(myCohort));
+      const changed = next !== cohortFilter;
+      cohortFilter = next;
+      return changed;
+    }
+
+    applyDefaultCohortFilter();
+
+    // 以前の全件キャッシュ（容量を圧迫していたもの）は不要になったので削除する
+    try {
+      localStorage.removeItem("publicBooks");
+      localStorage.removeItem("usersCacheV2");
+    } catch (e) { }
+
+    // XSS対策: テキストをそのまま innerHTML に差し込まないようにエスケープする
+    function escapeHtml(str) {
+      return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    const statusDiv = document.getElementById("status");
+    const loginBtn = document.getElementById("loginBtn");
+    const logoutBtn = document.getElementById("logoutBtn");
+    const settingsBtn = document.getElementById("settingsBtn");
+
+    const savedUser =
+      JSON.parse(localStorage.getItem("cachedUser"));
+
+    if (savedUser) {
+      loginBtn.style.display = "none";
+      logoutBtn.style.display = "inline-block";
+      settingsBtn.style.display = "inline-block";
+    }
+
+    function handleSignedOut() {
+      // cachedUserは明示的なログアウト操作(logout())でのみ削除する
+      // (ここで消すと、次に一時的にnullが発火した際の再確認猶予が効かなくなるため)
+      statusDiv.textContent = "ログアウト中";
+      loginBtn.style.display = "inline-block";
+      logoutBtn.style.display = "none";
+      settingsBtn.style.display = "none";
+    }
+
+    /* Firebaseが端末に保存された認証状態を復元し終える前に、onAuthStateChangedが
+       一時的にnullで発火することがある。ログイン中のキャッシュ(cachedUser)が
+       残っている場合は即座にログアウト扱いにせず、少し待ってから本当に
+       未ログインのままかを再確認する（実際はログインしたままなのに一瞬
+       ログアウト状態の表示になってしまう不具合を防ぐため）。 */
+    firebase.auth().onAuthStateChanged(user => {
+      currentUser = user;
+
+      if (user) {
+
+        localStorage.setItem(
+          "cachedUser",
+          JSON.stringify({
+            uid: user.uid
+          })
+        );
+        statusDiv.textContent = "ログイン中: " + user.uid;
+        loginBtn.style.display = "none";
+        logoutBtn.style.display = "inline-block";
+        settingsBtn.style.display = "inline-block";
+
+        // 自分の期を記録し、標準の絞り込みを自分の学年にする
+        try {
+          localStorage.setItem(MY_COHORT_KEY, String(window.VOCABOOST_COHORT_FROM_EMAIL(user.email)));
+        } catch (e) { }
+        if (applyDefaultCohortFilter()) {
+          loadList(true);
+        } else {
+          renderCohortOptions();
+        }
+        checkExistingCohorts();
+      } else if (localStorage.getItem("cachedUser")) {
+        (function () {
+          // 端末やネットワークが遅いと1回・1.5秒の再確認だけでは間に合わないことがあるため、
+          // 間隔を広げながら最大4回(合計15秒)まで再確認してから本当に未ログインと判断する。
+          const delays = [1000, 2000, 4000, 8000];
+          const recheck = (i) => {
+            setTimeout(() => {
+              if (firebase.auth().currentUser) return;
+              if (i + 1 < delays.length) recheck(i + 1);
+              else {
+                handleSignedOut();
+                if (window.VOCABOOST_SHOW_SESSION_LOST_NOTICE) {
+                  window.VOCABOOST_SHOW_SESSION_LOST_NOTICE(!navigator.onLine);
+                }
+              }
+            }, delays[i]);
+          };
+          recheck(0);
+        })();
+      } else {
+        handleSignedOut();
+      }
+    });
+
+    function goPage(page) {
+      if (page === "index.html") {
+        location.href = "index.html";
+        return;
+      }
+      // currentUserはFirebaseの認証確認(非同期)が完了するまでnullのままのため、
+      // ページ読み込み直後にボタンを押すと「未ログイン」と誤判定されることがあった。
+      // localStorageのキャッシュがあれば、確認が終わっていなくても遷移してよいと判断する。
+      const hasCachedUser = !!localStorage.getItem("cachedUser");
+      if (currentUser || hasCachedUser) {
+        location.href = page;
+      } else {
+        alert("ログインしてください");
+        location.href = "login.html";
+      }
+    }
+
+    function logout() {
+      localStorage.removeItem("cachedUser");
+      localStorage.removeItem(MY_COHORT_KEY);
+      firebase.auth().signOut();
+    }
+
+    function showLoading() {
+      const overlay = document.getElementById('loading-overlay');
+      if (overlay) overlay.classList.remove('hidden');
+    }
+
+    function hideLoading() {
+      const overlay = document.getElementById('loading-overlay');
+      if (overlay) {
+        overlay.classList.add('hidden');
+      }
+    }
+
+    function currentSort() {
+      return mode === "book"
+        ? document.getElementById("sortBook").value
+        : document.getElementById("sortUser").value;
+    }
+
+    function stateKey() {
+      return [mode, cohortFilter, currentSort(), appliedSearch].join("|");
+    }
+
+    // 並び替えに使うフィールドと向き
+    const SORT_FIELDS = {
+      book: { created: ["createdAt", "desc"], name: ["title", "asc"], count: ["wordCount", "desc"] },
+      user: { count: ["bookCount", "desc"], created: ["createdAt", "desc"], name: ["username", "asc"] }
+    };
+
+    function searchKeyFor(term) {
+      const keys = window.VOCABOOST_SEARCH_KEYS ? window.VOCABOOST_SEARCH_KEYS(term) : [];
+      // 2文字の組み合わせの方が絞り込めるので優先する
+      return keys.find(k => k.length === 2) || keys[0] || "";
+    }
+
+    function normalizeText(str) {
+      return window.VOCABOOST_NORMALIZE_SEARCH_TEXT
+        ? window.VOCABOOST_NORMALIZE_SEARCH_TEXT(str)
+        : String(str || "").toLowerCase();
+    }
+
+    // useFallback: 複合インデックスが未作成のときは並び替えなしのクエリで取得し、画面側で並べ替える
+    function buildQuery(useFallback) {
+      const sort = SORT_FIELDS[mode][currentSort()];
+      let q = mode === "book"
+        ? db.collection("wordbooks").where("isPublic", "==", true)
+        : db.collection("users");
+      if (cohortFilter !== "all") {
+        q = q.where(mode === "book" ? "ownerCohort" : "cohort", "==", Number(cohortFilter));
+      }
+      if (appliedSearch) {
+        // インデックス未作成時は、検索キーを使わずに最大SEARCH_FALLBACK_SIZE件から画面側で探す
+        return useFallback ? q : q.where("searchKeys", "array-contains", searchKeyFor(appliedSearch));
+      }
+      if (!useFallback) q = q.orderBy(sort[0], sort[1]);
+      return q;
+    }
+
+    function toBookItem(d) {
+      const data = d.data();
+      return {
+        id: d.id,
+        title: data.title || "(無題)",
+        ownerName: data.ownerName || "不明",
+        ownerId: data.owner,
+        // ownerNameと同様、wordbookドキュメント側に複製された写真をそのまま使う
+        // （usersコレクションの読み取りにはログインが必要なため、未ログインの閲覧者でも表示できるように）
+        ownerPhotoURL: data.ownerPhotoURL || null,
+        ownerCohort: data.ownerCohort,
+        // 数値以外が書き込まれていてもHTMLとして解釈されないよう数値化する
+        count: Number(data.wordCount) || 0,
+        createdAtMillis: data.createdAt && data.createdAt.toMillis ? data.createdAt.toMillis() : 0
+      };
+    }
+
+    function toUserItem(d) {
+      const data = d.data();
+      return {
+        id: d.id,
+        username: data.username || "名無し",
+        photoURL: data.photoURL || null,
+        cohort: (data.cohort !== undefined && data.cohort !== null)
+          ? window.VOCABOOST_NORMALIZE_COHORT(data.cohort)
+          : window.VOCABOOST_COHORT_FROM_EMAIL(data.email),
+        bookCount: typeof data.bookCount === "number" ? data.bookCount : null,
+        createdAtMillis: data.createdAt && data.createdAt.toMillis ? data.createdAt.toMillis() : 0
+      };
+    }
+
+    // 1ページ目はこのタブ内で数分間使い回す（写真を含むためlocalStorageではなくsessionStorageに保存）
+    function readListCache(key) {
+      try {
+        const c = JSON.parse(sessionStorage.getItem("vb_list_" + key) || "null");
+        return c && Array.isArray(c.items) ? c : null;
+      } catch (e) {
+        return null;
+      }
+    }
+
+    function writeListCache(key, state) {
+      try {
+        sessionStorage.setItem("vb_list_" + key, JSON.stringify({
+          savedAt: Date.now(), items: state.items, hasMore: state.hasMore
+        }));
+      } catch (e) {
+        // 容量超過などで保存できなくても表示には影響しない
+      }
+    }
+
+    function isIndexError(e) {
+      return e && (e.code === "failed-precondition" || /index/i.test(e.message || ""));
+    }
+
+    // retryWithoutSort: 並び替え用のインデックスが無かったときの、並び替えなしでの再読み込み
+    async function loadList(reset, retryWithoutSort) {
+      const state = states[mode];
+      const key = stateKey();
+
+      if (retryWithoutSort) {
+        state.fallback = true;
+      } else if (reset) {
+        Object.assign(state, { key, items: [], lastDoc: null, hasMore: false, fromCache: false, fallback: false, error: "" });
+        const cached = readListCache(key);
+        if (cached) {
+          state.items = cached.items;
+          state.hasMore = cached.hasMore;
+          state.fromCache = true;
+          hideLoading();
+          render();
+          if (Date.now() - cached.savedAt < LIST_CACHE_TTL) return;
+        } else {
+          showLoading();
+        }
+      } else if (state.loading || state.key !== key) {
+        return;
+      }
+      const loadFromTop = reset || retryWithoutSort;
+
+      // ユーザー一覧の読み取りにはログインが必要（Firestoreのルール）
+      if (mode === "user" && !firebase.auth().currentUser && !localStorage.getItem("cachedUser")) {
+        state.error = "ユーザー一覧を見るにはログインしてください。";
+        hideLoading();
+        render();
+        return;
+      }
+
+      state.loading = true;
+      render();
+
+      const size = appliedSearch ? (state.fallback ? SEARCH_FALLBACK_SIZE : SEARCH_PAGE_SIZE) : PAGE_SIZE;
+      let retryPending = false;
+      try {
+        let q = buildQuery(state.fallback);
+        // キャッシュから表示した一覧の続きは、続きの位置が分からないため先頭から読み直す
+        const refetchFromTop = state.fromCache && !loadFromTop;
+        let limit = size;
+        if (refetchFromTop) {
+          limit = state.items.length + size;
+        } else if (state.lastDoc && !loadFromTop) {
+          q = q.startAfter(state.lastDoc);
+        }
+        const snap = await q.limit(limit).get();
+        if (state.key !== key) return; // 読み込み中に条件が変わった
+
+        const mapped = snap.docs.map(mode === "book" ? toBookItem : toUserItem);
+        state.items = (loadFromTop || refetchFromTop) ? mapped : state.items.concat(mapped);
+        state.lastDoc = snap.docs.length ? snap.docs[snap.docs.length - 1] : state.lastDoc;
+        state.hasMore = snap.docs.length === limit;
+        state.fromCache = false;
+        if (loadFromTop || refetchFromTop) writeListCache(key, state);
+        if (mode === "book") saveViewPreviewCache(mapped);
+      } catch (e) {
+        if (!state.fallback && isIndexError(e)) {
+          // 並び替え用のインデックスがまだ無い場合は、並び替えなしで読み直す
+          console.warn("インデックスが未作成のため、並び替えなしで読み込みます", e);
+          state.loading = false;
+          retryPending = true;
+        } else {
+          console.error("Load failed:", e);
+          state.error = "読み込みに失敗しました。通信状況を確認してもう一度お試しください。";
+        }
+      } finally {
+        if (state.key === key && !retryPending) {
+          state.loading = false;
+          hideLoading();
+          render();
+        }
+      }
+      if (retryPending) return loadList(false, true);
+    }
+
+    // view.htmlを開いたときに一瞬で表示するためのキャッシュ（読み込んだ分だけ・写真なし）
+    function saveViewPreviewCache(items) {
+      items.forEach(b => {
+        try {
+          localStorage.setItem(
+            `book_${b.id}`,
+            JSON.stringify({
+              owner: b.ownerId,
+              title: b.title,
+              detailHtml: `
+                <a href="user.html?id=${encodeURIComponent(b.ownerId || "")}" class="creator-btn">
+                  ${window.VOCABOOST_AVATAR_HTML(null, 24)}
+                  <span>${escapeHtml(b.ownerName)}</span>
+                </a>
+                <div class="meta-row">計 ${b.count} 単語</div>
+              `,
+              wordsHtml: ""
+            })
+          );
+        } catch (e) { }
+      });
+    }
+
+    function onSearchInput() {
+      // 入力を消したときは、検索をやめて通常の一覧に戻す
+      if (!document.getElementById("search").value.trim() && appliedSearch) {
+        applySearch();
+      }
+    }
+
+    function applySearch() {
+      appliedSearch = normalizeText(document.getElementById("search").value);
+      loadList(true);
+    }
+
+    function onSortChange() {
+      loadList(true);
+    }
+
+    function showBooks() {
+      mode = "book";
+      document.getElementById("bookTab").className = "tab active";
+      document.getElementById("userTab").className = "tab inactive";
+      document.getElementById("sortBook").style.display = "";
+      document.getElementById("sortUser").style.display = "none";
+      if (states.book.key !== stateKey()) loadList(true); else render();
+    }
+
+    function showUsers() {
+      mode = "user";
+      document.getElementById("bookTab").className = "tab inactive";
+      document.getElementById("userTab").className = "tab active";
+      document.getElementById("sortBook").style.display = "none";
+      document.getElementById("sortUser").style.display = "";
+      if (states.user.key !== stateKey()) loadList(true); else render();
+    }
+
+    function sortItems(items) {
+      const sort = currentSort();
+      const list = items.slice();
+      if (mode === "book") {
+        if (sort === "created") list.sort((a, b) => (b.createdAtMillis || 0) - (a.createdAtMillis || 0));
+        else if (sort === "name") list.sort((a, b) => a.title.localeCompare(b.title, "ja"));
+        else if (sort === "count") list.sort((a, b) => b.count - a.count);
+      } else {
+        if (sort === "name") list.sort((a, b) => a.username.localeCompare(b.username, "ja"));
+        else if (sort === "count") list.sort((a, b) => (b.bookCount || 0) - (a.bookCount || 0));
+        else if (sort === "created") list.sort((a, b) => (b.createdAtMillis || 0) - (a.createdAtMillis || 0));
+      }
+      return list;
+    }
+
+    function render() {
+      const state = states[mode];
+      const area = document.getElementById("list");
+      // 一覧を作り直す間にページが一瞬短くなると、ブラウザがスクロール位置を一番上に
+      // 戻してしまう（「もっと見る」を押すと先頭に戻っていた）。作り直す間は高さを保ち、
+      // スクロール位置もそのままにする
+      const scrollY = window.scrollY;
+      area.style.minHeight = area.offsetHeight + "px";
+      Array.from(area.children).forEach(el => { if (el.id !== "loading-overlay") el.remove(); });
+      renderCohortOptions();
+
+      let items = state.items;
+      // 検索時はキーで大まかに絞った結果から、検索語を含むものだけを表示する
+      if (appliedSearch) {
+        items = items.filter(it => normalizeText(mode === "book" ? it.title : it.username).includes(appliedSearch));
+      }
+      // 検索時・インデックス未作成時はサーバー側で並べ替えていないので、ここで並べ替える
+      if (appliedSearch || state.fallback) items = sortItems(items);
+
+      if (mode === "book") {
+        items.forEach(b => {
+          const cohort = b.ownerCohort;
+          const div = document.createElement("div");
+          div.className = "card";
+          div.innerHTML = `
+        <div>
+          <div class="title">${escapeHtml(b.title)}</div>
+          <div class="book-meta-row">
+            <a href="user.html?id=${encodeURIComponent(b.ownerId || "")}" class="creator-btn">
+              ${window.VOCABOOST_AVATAR_HTML(b.ownerPhotoURL, 24, cohort)}
+              <span>${escapeHtml(b.ownerName)}</span>
+            </a>
+            ${cohort !== undefined && cohort !== null ? window.VOCABOOST_COHORT_BADGE_HTML(cohort) : ""}
+            <div class="count">単語数：${b.count}</div>
+          </div>
+        </div>
+        <button onclick="location.href='view.html?id=${encodeURIComponent(b.id)}'">開く</button>
+      `;
+          area.appendChild(div);
+        });
+      } else {
+        items.forEach(u => {
+          const div = document.createElement("div");
+          div.className = "card";
+          div.innerHTML = `
+        <div>
+          <a href="user.html?id=${encodeURIComponent(u.id)}" class="user-identity">
+            ${window.VOCABOOST_AVATAR_HTML(u.photoURL, 28, u.cohort)}
+            <span>${escapeHtml(u.username)}</span>
+          </a>
+          <div class="user-meta-row">
+            ${window.VOCABOOST_COHORT_BADGE_HTML(u.cohort)}
+            <div class="count">作成した単語帳数：${u.bookCount === null ? "-" : u.bookCount}</div>
+          </div>
+        </div>
+        <button onclick="location.href='user.html?id=${encodeURIComponent(u.id)}'">見る</button>
+      `;
+          area.appendChild(div);
+        });
+      }
+
+      const footer = document.createElement("div");
+      footer.className = "listFooter";
+      if (state.error) {
+        footer.innerHTML = `<p class="count">${escapeHtml(state.error)}</p>`;
+      } else if (!state.loading && items.length === 0 && state.key === stateKey()) {
+        footer.innerHTML = `<p class="count">${mode === "book" ? "該当する単語帳はありません" : "該当するユーザーはいません"}</p>`;
+      }
+      if (state.hasMore && !state.error) {
+        const more = document.createElement("button");
+        more.type = "button";
+        more.className = "moreBtn";
+        more.textContent = state.loading ? "読み込み中..." : "もっと見る";
+        more.disabled = state.loading;
+        more.onclick = () => loadList(false);
+        footer.appendChild(more);
+      }
+      area.appendChild(footer);
+
+      area.style.minHeight = "200px";
+      if (window.scrollY !== scrollY) window.scrollTo(0, scrollY);
+    }
+
+    loadList(true);
+  </script>
+</body>
+
+</html>

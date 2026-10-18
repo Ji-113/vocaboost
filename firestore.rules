@@ -1,0 +1,229 @@
+rules_version = '2';
+
+// ⚠️ このファイルはリポジトリには存在しなかったため、今回の運営専用ページ(admin.html)の
+// 追加に合わせて提案として新規作成したものです。実際の本番ルールは Firebase コンソール側で
+// 管理されており、このリポジトリからは自動反映されません。内容を確認のうえ、
+// Firebase コンソール（Firestore Database → ルール）に手動で貼り付けて公開するか、
+// Firebase CLI をお持ちの場合は `firebase deploy --only firestore:rules` を実行してください。
+//
+// admin.html / analytics.html / usage.html / account-widgets.js が管理者と判定するメールアドレスと、
+// ここでの isAdmin() の一覧は必ず一致させてください。
+//
+// また notifications コレクションへのクエリ（target==での絞り込み、
+// targetUserIds のarray-containsでの絞り込み、いずれも createdAt での並び替えと
+// 組み合わせる）や、wordbooks コレクションへのクエリ（owner==での絞り込みと
+// createdAt での並び替えを組み合わせる、index.htmlの「自分の単語帳」一覧など）
+// には複合インデックスが必要です。firestore.indexes.json を参照し、
+// Firebaseコンソールの「Firestore Database → インデックス」で作成してください
+// （Firebase CLIがあれば `firebase deploy --only firestore:indexes` でも可）。
+// このインデックスが無い環境でも一覧が空にならないよう、index.html側では
+// クエリ失敗時にorderByなしで取得してクライアント側で並び替えるフォールバックを実装済み。
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && request.auth.token.email in [
+        "202301745@edu.nishiyamato.ed.jp",
+        "202305145@edu.nishiyamato.ed.jp"
+      ];
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    // 自己紹介(bio)は文字列かつ200文字以内のみ許可する
+    function isValidBio(data) {
+      return !('bio' in data) || (data.bio is string && data.bio.size() <= 200);
+    }
+
+    // ユーザー情報。
+    // 注意: username と email が同じドキュメントに入っているため、他ユーザーの
+    // 作成者名(username)を表示する既存ページ(view.html/list.html/user.html等)を
+    // 壊さないよう、読み取りは引き続きログイン済み全員に許可している。
+    // そのため email も技術的にはログイン済みの全ユーザーがSDK越しに読める状態のままであり、
+    // 管理者ページ上だけの制限ではない点に注意すること。厳密にemailを秘匿したい場合は
+    // 「公開用プロフィール(username等)」と「非公開情報(emailを含む)」をドキュメントごと
+    // 分離する設計変更が別途必要（本ルールでは未対応）。
+    // frozen / restrictedUntil / restrictedReason / frozenReason は管理者のみが変更できる。
+    //
+    // favoriteBookIds（お気に入りに登録した単語帳IDの配列, view.html/favorites.html）と
+    // followingIds（フォロー中のユーザーuidの配列, user.html/favorites.html）は、
+    // いずれも本人だけが自分のドキュメントを更新できる仕組みにそのまま乗せているため、
+    // 追加のルールは不要（下のisOwner(userId)の分岐で許可される）。followingIdsは
+    // 「誰が自分をフォローしているか」を調べる際にarray-containsで全ユーザーを横断検索する
+    // ため（account-widgets.jsのVOCABOOST_NOTIFY_FOLLOWERS_NEW_BOOK、favorites.html）、
+    // 上記の read: if isSignedIn(); により検索可能になっている。
+    match /users/{userId} {
+      allow read: if isSignedIn();
+
+      allow create: if isOwner(userId) && isValidBio(request.resource.data);
+
+      allow update: if isAdmin() ||
+        (
+          isOwner(userId) &&
+          !request.resource.data.diff(resource.data).affectedKeys().hasAny(
+            ["frozen", "frozenReason", "restrictedUntil", "restrictedReason"]
+          ) &&
+          isValidBio(request.resource.data)
+        );
+
+      allow delete: if isAdmin();
+    }
+
+    // 単語帳。所有者は自分の単語帳を自由に読み書きでき、
+    // 他人は isPublic な単語帳のみ読み取り可能。管理者は全件を読み取れる
+    // （荒らし対策の一覧表示のため）ほか、運営ページからのアカウント削除に伴う
+    // 単語帳・単語の連鎖削除、および強制非公開(forcedPrivate)の設定ができるよう
+    // update / delete も管理者に許可する。
+    // forcedPrivate == true の単語帳は、所有者が isPublic を true に書き換える
+    // 更新をサーバー側でも拒否し、運営ページ以外からの解除を防ぐ。
+    match /wordbooks/{bookId} {
+      allow read: if resource.data.isPublic == true || isOwner(resource.data.owner) || isAdmin();
+      allow create: if isSignedIn() && isOwner(request.resource.data.owner);
+      // forcedPrivate自体は管理者しか変更できない（以前は所有者がforcedPrivateをfalseに
+      // 書き換えてから公開し直すことで、強制非公開を解除できてしまっていた）。
+      // ownerも変更不可（他人の単語帳に見せかける書き換えを防ぐ）。
+      allow update: if isAdmin() || (
+        isOwner(resource.data.owner) &&
+        !request.resource.data.diff(resource.data).affectedKeys().hasAny(["forcedPrivate", "owner"]) &&
+        !(resource.data.forcedPrivate == true && request.resource.data.isPublic == true)
+      );
+      allow delete: if isOwner(resource.data.owner) || isAdmin();
+
+      match /words/{wordId} {
+        allow read: if get(/databases/$(database)/documents/wordbooks/$(bookId)).data.isPublic == true
+          || isOwner(get(/databases/$(database)/documents/wordbooks/$(bookId)).data.owner)
+          || isAdmin();
+        allow write: if isOwner(get(/databases/$(database)/documents/wordbooks/$(bookId)).data.owner)
+          || isAdmin();
+      }
+    }
+
+    // 通知。
+    // 注意: 当初は target=="all" || targetUserIdsに自分のuidを含む || isAdmin() という
+    // OR条件で絞り込んでいたが、Firestoreのクエリルール検証は「絞り込みクエリがOR条件の
+    // いずれかを確実に満たすと静的に証明できるか」を厳密にしか判定できず、
+    // array-contains クエリ + 複数分岐のORの組み合わせで
+    // "Missing or insufficient permissions" が発生する実例が確認された。
+    // 通知の内容自体は運営からのお知らせであり機微な個人情報ではないため、
+    // 読み取りはログイン済み全員に許可し、書き込み（作成・更新・削除）は
+    // 基本的に管理者に限定することで確実に動作させる。
+    // 例外として以下の2種類だけは、一般ユーザーが自分自身をcreatedByとして作成できる
+    // （それ以外のtarget値での作成は引き続き管理者限定のまま、全員向け通知等を
+    // 一般ユーザーが偽装送信することはできない）。
+    //   - target=="admin"（通報が入った際に運営へ知らせる用途。targetUserIdsは空。
+    //     account-widgets.js側は自分が管理者の場合のみこの通知を問い合わせて表示するため、
+    //     一般ユーザーの画面には表示されない）
+    //   - target=="follow_new_book"（フォロー中のユーザーが新しい単語帳を作成した通知。
+    //     targetUserIdsにフォロワーのuidを入れる。このtargetUserIdsが実際に
+    //     createdBy(=作成者本人)をfollowingIdsに含むユーザーの一覧と一致しているかは
+    //     ルール側では検証できない。バックエンドを持たない静的サイトのため、クライアントが
+    //     計算したフォロワー一覧をそのまま信頼する設計であり、悪意のあるユーザーが任意の
+    //     ユーザーへ通知を送りつけられる余地が残る点に注意。件数の上限だけルールで制限する）
+    //   - target=="follow"（誰かにフォローされた通知。targetUserIdsはフォローされた
+    //     本人1名のみ）
+    //   - target=="favorite_book"（単語帳がお気に入りに登録された通知。targetUserIdsは
+    //     単語帳の所有者1名のみ）
+    match /notifications/{notifId} {
+      allow read: if isSignedIn();
+      allow create: if isAdmin() || (
+        isSignedIn() &&
+        request.resource.data.target == "admin" &&
+        request.resource.data.targetUserIds == [] &&
+        request.resource.data.createdBy == request.auth.uid
+      ) || (
+        isSignedIn() &&
+        request.resource.data.target == "follow_new_book" &&
+        request.resource.data.createdBy == request.auth.uid &&
+        request.resource.data.targetUserIds is list &&
+        request.resource.data.targetUserIds.size() <= 2000
+      ) || (
+        isSignedIn() &&
+        request.resource.data.target == "follow" &&
+        request.resource.data.createdBy == request.auth.uid &&
+        request.resource.data.targetUserIds is list &&
+        request.resource.data.targetUserIds.size() == 1
+      ) || (
+        isSignedIn() &&
+        request.resource.data.target == "favorite_book" &&
+        request.resource.data.createdBy == request.auth.uid &&
+        request.resource.data.targetUserIds is list &&
+        request.resource.data.targetUserIds.size() == 1
+      );
+      allow update, delete: if isAdmin();
+    }
+
+    // 通報。単語帳・ユーザーの通報機能。内容は運営にのみ届く必要があるため、
+    // 作成は本人（reportedBy == 自分のuid）のみ許可し、読み取りは通報者本人を
+    // 含めて一切許可しない（管理者のみが読める）。理由(reason)は必須。
+    match /reports/{reportId} {
+      allow create: if isSignedIn()
+        && request.resource.data.reportedBy == request.auth.uid
+        && request.resource.data.type in ["wordbook", "user"]
+        && request.resource.data.targetId is string
+        && request.resource.data.targetId.size() > 0
+        && request.resource.data.reason is string
+        && request.resource.data.reason.size() > 0;
+      allow read, update, delete: if isAdmin();
+    }
+
+    // アクセス解析（analytics.html、運営専用）。analytics-tracker.js が全ページから書き込む。
+    // バックエンドを持たない静的サイトのため、未ログインの利用者（ログイン画面等）からも
+    // 直接Firestoreに書き込めるようにする必要があり、書き込み自体はログイン状態を問わず許可している。
+    // その代わり、1回の書き込みで変化させられる内容を厳しく制限することで、
+    // 悪意のある大量アクセス・改ざんの影響をある程度抑える（完全な不正対策ではない点に注意）。
+    //
+    // ドキュメントID（バケットID）は「YYYYMMDDHHmm」形式（30分単位に切り捨てた時刻、例:
+    // "202608301330"）。bucketStart はそのバケットの開始時刻で、現在時刻から見て
+    // 前後31分以内のものしか書き込めないようにし、過去・未来の日時を偽装したバケットが
+    // 作成されるのを防ぐ。
+    function isRecentBucketStart(ts) {
+      return ts is timestamp
+        && ts <= request.time
+        && request.time < ts + duration.value(31, 'm');
+    }
+
+    match /analytics/{bucketId} {
+      allow read: if isAdmin();
+
+      // 新規作成: このバケットへの最初の書き込み。Pvは1、Ssは0か1から始まる。
+      allow create: if bucketId.matches('^[0-9]{12}$')
+        && request.resource.data.keys().hasOnly(['bucketStart', 'pv', 'ss', 'updatedAt'])
+        && isRecentBucketStart(request.resource.data.bucketStart)
+        && request.resource.data.pv == 1
+        && request.resource.data.ss in [0, 1]
+        && request.resource.data.updatedAt == request.time;
+
+      // 更新: 1回の表示ごとにPvは必ず+1、Ssは+0か+1のみ（bucketStartは変更不可）。
+      allow update: if request.resource.data.diff(resource.data).affectedKeys().hasOnly(['pv', 'ss', 'updatedAt'])
+        && request.resource.data.pv == resource.data.pv + 1
+        && (request.resource.data.ss == resource.data.ss || request.resource.data.ss == resource.data.ss + 1)
+        && request.resource.data.updatedAt == request.time;
+
+      allow delete: if isAdmin();
+    }
+
+    // Ssの重複加算を防ぐための「この30分バケットでこの端末からの計測は済み」マーカー。
+    // ドキュメントID（"{バケットID}_{端末ID}"）ごとに一度しか作成できないため、
+    // 2回目以降の作成（＝同じ端末からの同一バケット内の再訪問）は自動的に拒否される。
+    match /analyticsSessionMarkers/{markerId} {
+      allow read: if isAdmin();
+      allow create: if request.resource.data.keys().hasOnly(['bucket', 'device', 'createdAt'])
+        && request.resource.data.bucket is string
+        && request.resource.data.bucket.matches('^[0-9]{12}$')
+        && request.resource.data.device is string
+        && request.resource.data.device.size() > 0
+        && request.resource.data.device.size() <= 100
+        && markerId == request.resource.data.bucket + '_' + request.resource.data.device
+        && request.resource.data.createdAt == request.time;
+      allow update: if false;
+      allow delete: if isAdmin();
+    }
+  }
+}

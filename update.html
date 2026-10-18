@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, user-scalable=yes">
+  <title>更新履歴</title>
+  <link rel="apple-touch-icon" sizes="512x512" href="./images/icon.png">
+  <link rel="icon" type="image/x-icon" href="./images/favicon.ico">
+  <link rel="stylesheet" type="text/css" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <script src="theme.js"></script>
+  <style>
+    .card {
+      background: var(--color-surface);
+      color: var(--color-text);
+      padding: 20px;
+      border-radius: 12px;
+      margin-bottom: 15px;
+      text-align: left;
+    }
+
+    .date {
+      font-size: 13px;
+      color: var(--color-text-sub);
+    }
+
+    .version {
+      font-weight: bold;
+      font-size: 16px;
+    }
+
+    ul {
+      margin-top: 8px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <header>
+    <p class="headertitle"><a href="index.html"><img src="./images/rogo.png" height="70vh"></a></p>
+    <div id="status" style="display:none">ログイン確認中...</div>
+    <div>
+      <span id="notifBellContainer"></span>
+      <button id="settingsBtn" class="header-btn" style="display:none" onclick="goPage('settings.html')">設定</button>
+      <button id="loginBtn" class="header-btn" onclick="location.href='login.html'">ログイン</button>
+      <button id="logoutBtn" class="header-btn" style="display:none" onclick="logout()">ログアウト</button>
+    </div>
+  </header>
+
+  <main>
+    <div class="card">
+      <div class="version">v4.1.0</div>
+      <div class="date">2026/9/26</div>
+      <ul>
+        <li>プロフィールに自己紹介文を追加</li>
+        <li>user.htmlで自分のプロフィールを編集できるように変更</li>
+        <li>レスポンシブデザインのUIを大幅変更</li>
+      </ul>
+    </div>
+    <div class="card">
+      <div class="version">v4.0.0</div>
+      <div class="date">2026/9/23</div>
+      <ul>
+        <li>フォロー・お気に入り昨日を追加</li>
+        <li>オフラインモードを追加</li>
+        <li>ヒント・解説機能を追加</li>
+        <li>一部UIを調節</li>
+        <li>その他軽微なバグを修正</li>
+      </ul>
+    </div>
+    <div class="card">
+      <div class="version">v3.0.0</div>
+      <div class="date">2026/6/29</div>
+      <ul>
+        <li>マイページを設定ページに変更</li>
+        <li>ダークモードを追加</li>
+        <li>フォント変更機能を追加</li>
+        <li>キャッシュ保存により動きを早くなるよう変更</li>
+        <li>UIを一部変更</li>
+        <li>その他軽微なバグを修正</li>
+      </ul>
+    </div>
+    <div class="card">
+      <div class="version">v2.1.0</div>
+      <div class="date">2026/6/20</div>
+      <ul>
+        <li>編集時の選択削除機能、単語の入れ替え機能を追加</li>
+        <li>テストに自分で採点機能を追加</li>
+        <li>サイトの動きが早くなるようキャッシュ保存するように変更</li>
+        <li>その他UIを一部変更</li>
+        <li>その他軽微なバグを修正</li>
+      </ul>
+    </div>
+    <div class="card">
+      <div class="version">v2.0.1</div>
+      <div class="date">2026/5/18</div>
+      <ul>
+        <li>パスワードを忘れた場合再設定出来る機能を追加</li>
+        <li>単語帳のタイトル・説明文や単語の内容を後から編集できるように変更</li>
+        <li>逆CSV保存機能を追加</li>
+        <li>その他軽微なバグを修正</li>
+      </ul>
+    </div>
+    <div class="card">
+      <div class="version">v2.0.0</div>
+      <div class="date">2026/4/29</div>
+      <ul>
+        <li>暗記&テストページに進行状況バーを追加</li>
+        <li>自分の単語帳を作成順に並べるように変更</li>
+        <li>その他軽微なバグを修正</li>
+      </ul>
+    </div>
+    <div class="card">
+      <div class="version">v1.2.1</div>
+      <div class="date">2026/3/4</div>
+      <ul>
+        <li>単語帳の詳細情報表示を強化</li>
+        <li>単語帳の「説明文」機能を追加（作成・編集時に設定可能）</li>
+        <li>閲覧画面に「単語数」を表示</li>
+        <li>作成者名にプロフィールへのリンクを追加（閲覧画面・検索画面）</li>
+        <li>ホーム画面に読み込み中アニメーションを追加</li>
+        <li>その他UIの微調整と安定性の向上</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <div class="version">v1.2.0</div>
+      <div class="date">2026/3/3</div>
+      <ul>
+        <li><b>レスポンシブ対応</b></li>
+        <li>他人のユーザーページが開けないバグを修正</li>
+        <li>検索ページで読み込みが遅い問題を修正</li>
+        <li>単語帳数などがlist.htmlでセンタリングされるのを修正</li>
+        <li>その他軽微なバグを修正</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <div class="version">v1.1.1</div>
+      <div class="date">2026/3/3</div>
+      <ul>
+        <li>検索ページに読み込み中アニメーションを追加</li>
+        <li>検索ページに並び替え機能を追加</li>
+        <li>パスワード変更で新しいパスワードを2回要求するように変更</li>
+        <li>全ページにマイページ/ログアウトボタンを実装</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <div class="version">v1.1.0</div>
+      <div class="date">2026/2/26</div>
+      <ul>
+        <li>リリース</li>
+        <li>お問い合わせページを追加</li>
+        <li>削除機能が使えないバグを修正</li>
+        <li>ヘッダーの高さを修正</li>
+        <li>フッターの位置を修正</li>
+        <li>その他デザインを一部変更</li>
+      </ul>
+    </div>
+    <br>
+    <div class="card">
+      <div class="version">v1.0.1</div>
+      <div class="date">2026/02/15</div>
+      <ul>
+        <li>サイトのデザインを変更</li>
+      </ul>
+    </div>
+    <br>
+    <div class="card">
+      <div class="version">v1.0.0</div>
+      <div class="date">2026/02/08</div>
+      <ul>
+        <li>サイトを公開</li>
+      </ul>
+    </div>
+
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+      <div class="footertitle"><img src="./images/rogo.png" height="70vh"></div>
+      <div class="footer-links">
+        <a href="index.html">ホーム</a>
+        <a href="list.html">検索</a>
+        <a href="create.html">作成</a>
+        <a href="favorites.html">お気に入り</a>
+        <a href="settings.html">設定</a>
+        <a href="update.html">更新履歴</a>
+        <a href="contact.html">お問い合わせ</a>
+      </div>
+      <div class="copy">© 2026 TEAM-Minimal, Shiratae</div>
+    </div>
+  </footer>
+
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyD7CJmO3eAO0o2EPRDsVqTtZ_whRd_3-3E",
+      authDomain: "quiz1-4ffdc.firebaseapp.com",
+      projectId: "quiz1-4ffdc"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    let currentUser = null;
+
+    const statusDiv = document.getElementById("status");
+    const loginBtn = document.getElementById("loginBtn");
+    const logoutBtn = document.getElementById("logoutBtn");
+    const settingsBtn = document.getElementById("settingsBtn");
+
+    // ログイン情報のキャッシュを利用してヘッダーを即時表示
+    const savedUser =
+      JSON.parse(localStorage.getItem("cachedUser"));
+
+    if (savedUser) {
+      settingsBtn.style.display = "inline-block";
+      logoutBtn.style.display = "inline-block";
+      loginBtn.style.display = "none";
+    }
+
+    function handleSignedOut() {
+      // cachedUserは明示的なログアウト操作(logout())でのみ削除する
+      // (ここで消すと、次に一時的にnullが発火した際の再確認猶予が効かなくなるため)
+      statusDiv.textContent = "ログアウト中";
+      loginBtn.style.display = "inline-block";
+      logoutBtn.style.display = "none";
+      settingsBtn.style.display = "none";
+    }
+
+    /* Firebaseが端末に保存された認証状態を復元し終える前に、onAuthStateChangedが
+       一時的にnullで発火することがある。ログイン中のキャッシュ(cachedUser)が
+       残っている場合は即座にログアウト扱いにせず、少し待ってから本当に
+       未ログインのままかを再確認する（実際はログインしたままなのに一瞬
+       ログアウト状態の表示になってしまう不具合を防ぐため）。 */
+    auth.onAuthStateChanged(user => {
+      currentUser = user;
+      if (user) {
+        localStorage.setItem(
+          "cachedUser",
+          JSON.stringify({ uid: user.uid })
+        );
+        statusDiv.textContent = "ログイン中: " + user.uid;
+        loginBtn.style.display = "none";
+        logoutBtn.style.display = "inline-block";
+        settingsBtn.style.display = "inline-block";
+      } else if (localStorage.getItem("cachedUser")) {
+        (function () {
+          // 端末やネットワークが遅いと1回・1.5秒の再確認だけでは間に合わないことがあるため、
+          // 間隔を広げながら最大4回(合計15秒)まで再確認してから本当に未ログインと判断する。
+          const delays = [1000, 2000, 4000, 8000];
+          const recheck = (i) => {
+            setTimeout(() => {
+              if (auth.currentUser) return;
+              if (i + 1 < delays.length) recheck(i + 1);
+              else {
+                handleSignedOut();
+                if (window.VOCABOOST_SHOW_SESSION_LOST_NOTICE) {
+                  window.VOCABOOST_SHOW_SESSION_LOST_NOTICE(!navigator.onLine);
+                }
+              }
+            }, delays[i]);
+          };
+          recheck(0);
+        })();
+      } else {
+        handleSignedOut();
+      }
+    });
+
+    function goPage(page) {
+      if (page === "index.html") {
+        location.href = "index.html";
+        return;
+      }
+      // currentUserはFirebaseの認証確認(非同期)が完了するまでnullのままのため、
+      // ページ読み込み直後にボタンを押すと「未ログイン」と誤判定されることがあった。
+      // localStorageのキャッシュがあれば、確認が終わっていなくても遷移してよいと判断する。
+      const hasCachedUser = !!localStorage.getItem("cachedUser");
+      if (currentUser || hasCachedUser) {
+        location.href = page;
+      } else {
+        alert("ログインしてください");
+        location.href = "login.html";
+      }
+    }
+
+    function logout() {
+      localStorage.removeItem("cachedUser");
+      auth.signOut();
+    }
+  </script>
+
+  <script src="account-widgets.js?v=20260930"></script>
+  <script src="analytics-tracker.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,1020 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, user-scalable=yes">
+  <title>Test</title>
+  <link rel="apple-touch-icon" sizes="512x512" href="./images/icon.png">
+  <link rel="icon" type="image/x-icon" href="./images/favicon.ico">
+  <link rel="stylesheet" type="text/css" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <script src="theme.js"></script>
+  <style>
+    .main {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      flex: 1;
+    }
+
+    .card {
+      background: var(--color-surface);
+      color: var(--color-text);
+      max-width: 50%;
+      margin: 30px auto;
+      padding: 30px;
+      border-radius: 12px;
+      text-align: center;
+    }
+
+    input {
+      padding: 10px;
+      font-size: 16px;
+      max-width: 550px;
+      box-sizing: border-box;
+      border-radius: 8px;
+      border: 1px solid var(--color-border);
+    }
+
+    #ans {
+      margin-bottom: 10px;
+      width: 100%;
+    }
+
+    button {
+      background: var(--color-accent);
+      color: var(--color-accent-text);
+      border: none;
+      border-radius: 8px;
+      padding: 10px 16px;
+      margin: 6px;
+      font-size: 16px;
+    }
+
+    #quiz {
+      min-height: 340px;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+    }
+
+    #end {
+      height: 280px;
+    }
+
+    #score {
+      font-size: 20px;
+    }
+
+    #resultfont {
+      font-size: 30px;
+      font-weight: bold;
+    }
+
+    #q {
+      font-size: 30px;
+      min-height: 100px;
+      white-space: pre-wrap;
+    }
+
+    #hintBtn {
+      font-size: 13px;
+      padding: 6px 12px;
+    }
+
+    #hintText,
+    #noteText {
+      font-size: 14px;
+      color: var(--color-text-sub);
+      margin-top: 8px;
+      white-space: pre-wrap;
+    }
+
+    #result {
+      font-size: 20px;
+      min-height: 60px;
+      white-space: pre-wrap;
+    }
+
+    #result .correct,
+    #result .wrong {
+      font-weight: bold;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    #result .correct {
+      color: var(--color-accent);
+    }
+
+    #result .wrong {
+      color: var(--color-danger);
+    }
+
+    /* 正解：シンプルな丸（線のみ） */
+    #result .correct::before {
+      content: "";
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      flex-shrink: 0;
+      border: 3px solid var(--color-accent);
+      border-radius: 50%;
+      box-sizing: border-box;
+      transform: translateY(2px);
+    }
+
+    /* 不正解：シンプルなバツ（線のみ） */
+    #result .wrong::before {
+      content: "";
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      flex-shrink: 0;
+      background:
+        linear-gradient(45deg, transparent calc(50% - 2px), var(--color-danger) calc(50% - 2px), var(--color-danger) calc(50% + 2px), transparent calc(50% + 2px)),
+        linear-gradient(-45deg, transparent calc(50% - 2px), var(--color-danger) calc(50% - 2px), var(--color-danger) calc(50% + 2px), transparent calc(50% + 2px));
+      transform: translateY(2px);
+    }
+
+    #start {
+      height: auto;
+      padding-bottom: 30px;
+    }
+    #progress {
+      margin-top: auto;
+    }
+
+    #progressWrap {
+      width: 100%;
+      height: 12px;
+      background: var(--color-border);
+      border-radius: 10px;
+      margin-top: 15px;
+      overflow: hidden;
+    }
+
+    #progressBar {
+      height: 100%;
+      width: 0%;
+      background: var(--color-accent);
+      transition: 0.3s;
+    }
+
+    #progressText {
+      font-size: 14px;
+      margin-top: 5px;
+    }
+
+    #quizContent {
+      flex-grow: 1;
+      min-height: 200px;
+    }
+
+
+    @media (max-width: 768px) {
+      .card {
+        max-width:70%;
+      }
+      #q{
+        font-size:20px;
+      }
+      #result{
+        font-size:16px;
+        min-height:80px;
+      }
+      #ans{
+        font-size:14px;
+      }
+      #resultfont{
+        font-size:25px;
+      }
+    }
+
+    /* 設定項目 */
+    .option {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      width: min(360px, 90%);
+      margin: 10px auto;
+      padding: 10px 16px;
+      background: var(--color-surface);
+      border: 2px solid var(--color-border);
+      border-radius: 14px;
+      cursor: pointer;
+      transition: .2s;
+      user-select: none;
+      box-sizing: border-box;
+    }
+
+    .option:hover {
+      border-color: var(--color-accent);
+      background: var(--color-bg);
+      transform: translateY(-1px);
+    }
+
+    .option input[type="checkbox"] {
+      appearance: none;
+      -webkit-appearance: none;
+      width: 28px;
+      height: 28px;
+      border: 2px solid var(--color-accent);
+      border-radius: 8px;
+      background: var(--color-surface);
+      position: relative;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: .2s;
+    }
+
+    .option input[type="checkbox"]:checked {
+      background: var(--color-accent);
+    }
+
+    .option input[type="checkbox"]::before {
+      content: "";
+      position: absolute;
+
+      left: 50%;
+      top: 50%;
+
+      width: 7px;
+      height: 12px;
+
+      border-right: 3px solid white;
+      border-bottom: 3px solid white;
+
+      transform: translate(-50%, -58%) rotate(45deg);
+
+      opacity: 0;
+      transition: opacity .15s;
+    }
+
+    .option span {
+      font-size: 18px;
+      font-weight: 600;
+    }
+
+    .option input[type="checkbox"]:checked::before {
+        opacity: 1;
+    }
+
+    @media (max-width:768px){
+
+      .option{
+        width:95%;
+        padding:12px 14px;
+      }
+
+      .option input[type="checkbox"]{
+        width:30px;
+        height:30px;
+      }
+
+      .option span{
+        font-size:17px;
+      }
+    }
+
+
+
+    /* 全画面表示 */
+    .fullscreenBar {
+      text-align: center;
+      /* カードの下の余白(30px)を詰めて、カードのすぐ下に置く */
+      margin: -18px auto 30px;
+    }
+
+    #fullscreenBtn {
+      font-size: 14px;
+      padding: 8px 14px;
+    }
+
+    body.fullscreen-mode header,
+    body.fullscreen-mode footer {
+      display: none !important;
+    }
+
+    body.fullscreen-mode .card {
+      max-width: min(1000px, 94vw);
+      box-sizing: border-box;
+      margin: 3vh auto 12px;
+    }
+
+    /* 空の.mainが伸びてカードとボタンの間が空かないようにする */
+    body.fullscreen-mode .main {
+      flex: none;
+    }
+
+    body.fullscreen-mode .fullscreenBar {
+      margin-top: -4px;
+      margin-bottom: 12px;
+    }
+
+    body.fullscreen-mode #quiz {
+      min-height: calc(100vh - 3vh - 90px);
+      min-height: calc(100dvh - 3vh - 90px);
+    }
+
+    body.fullscreen-mode #q {
+      font-size: 56px;
+      /* 問題文と回答欄が近づきすぎないよう、下側は広めに空ける */
+      margin: 20px 0 40px;
+    }
+
+    body.fullscreen-mode #ans {
+      margin-top: 16px;
+      max-width: none;
+      width: 100%;
+      font-size: 24px;
+      padding: 14px;
+    }
+
+    body.fullscreen-mode #result {
+      font-size: 26px;
+    }
+
+    @media (max-width: 768px) {
+      body.fullscreen-mode #q {
+        font-size: 36px;
+      }
+
+      body.fullscreen-mode #ans {
+        font-size: 20px;
+      }
+
+      body.fullscreen-mode #result {
+        font-size: 20px;
+      }
+    }
+
+
+    /* パソコンの全画面表示では、回答ボタンと進み具合のバーをカードの一番下に置く */
+    @media (min-width: 769px) {
+      /* 出題中の#quizはJSで display:block を指定しているため、ここで flex に切り替える */
+      body.fullscreen-mode #quiz[style*="display: block"] {
+        display: flex !important;
+      }
+
+      body.fullscreen-mode #quizContent {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+
+      body.fullscreen-mode #quizContent > * {
+        max-width: 100%;
+      }
+
+      body.fullscreen-mode #ans,
+      body.fullscreen-mode #q,
+      body.fullscreen-mode #result,
+      body.fullscreen-mode #noteText {
+        align-self: stretch;
+      }
+
+      body.fullscreen-mode #answerBtn {
+        margin-top: auto;
+      }
+
+      body.fullscreen-mode #selfButtons {
+        margin-top: auto;
+      }
+    }
+
+    /* 自分で採点するときの「あなたの回答」「正解」の枠 */
+    .selfCheckBox {
+      text-align: left;
+      border: 1px solid var(--color-border);
+      border-radius: 8px;
+      padding: 12px;
+      margin-top: 10px;
+    }
+
+    body.fullscreen-mode .selfCheckBox {
+      font-size: 20px;
+    }
+
+
+    /* 自分で採点するときのキーボード操作の案内は、キーボードのある端末(パソコン)でだけ表示する */
+    .shortcutHint {
+      display: none;
+      font-size: 12px;
+      opacity: 0.85;
+    }
+
+    @media (hover: hover) and (pointer: fine) {
+      .shortcutHint {
+        display: inline;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <header>
+    <p class="headertitle"><a href="index.html"><img src="./images/rogo.png" height="70vh"></a></p>
+    <div id="status" style="display:none">ログイン確認中...</div>
+    <div>
+      <span id="notifBellContainer"></span>
+      <button id="settingsBtn" class="header-btn" style="display:none"
+        onclick="window.goPage('settings.html')">設定</button>
+      <button id="loginBtn" class="header-btn" onclick="location.href='login.html'">ログイン</button>
+      <button id="logoutBtn" class="header-btn" style="display:none" onclick="window.logout()">ログアウト</button>
+    </div>
+  </header>
+
+  <!-- 設定画面 -->
+  <div class="main" class="start">
+    <div class="card" id="start">
+      <h2>テスト設定</h2>
+
+      <label class="option">
+        <input type="checkbox" id="skipCheck" checked>
+        <span>正解済みをスキップ</span>
+      </label>
+
+      <label class="option">
+        <input type="checkbox" id="randomCheck">
+        <span>ランダム出題する</span>
+      </label>
+
+      <label class="option">
+        <input type="checkbox" id="selfCheck">
+        <span>自分で採点する</span>
+      </label>
+
+      <label class="option">
+        <input type="checkbox" id="swapCheck">
+        <span>表と裏を入れ替える</span>
+      </label>
+
+      <button onclick="resetLearned()">学習データをリセット</button><br><br>
+
+      <button id="startBtn" onclick="startTest()" disabled>読み込み中...</button><br><br>
+      <button onclick="goBack()">戻る</button>
+      <p id="startMsg" style="color:var(--color-danger)"></p>
+    </div>
+  </div>
+  <!-- クイズ -->
+  <div class="main">
+    <div class="card" id="quiz" style="display:none">
+
+      <!-- 上のコンテンツ -->
+      <div id="quizContent">
+        <h2 id="q"></h2>
+        <button id="hintBtn" type="button" onclick="showHint()" style="display:none">ヒントを表示</button>
+        <p id="hintText" style="display:none"></p>
+        <input id="ans" placeholder="答えを入力" autocomplete="off"><br>
+        <p id="result"></p>
+        <p id="noteText" style="display:none"></p>
+        <button id="answerBtn" onclick="check()">回答 (Enter)</button>
+        <div id="selfButtons" style="display:none;">
+          <button onclick="markCorrect()">正解<span class="shortcutHint"> (Ctrl+Enter)</span></button>
+          <button onclick="markWrong()">不正解<span class="shortcutHint"> (Ctrl+Shift+Enter)</span></button>
+        </div>
+      </div>
+
+      <!-- 下固定 -->
+      <div id="progress">
+        <div id="progressWrap">
+          <div id="progressBar"></div>
+        </div>
+        <p id="progressText"></p>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- 結果 -->
+  <div class="main">
+    <div class="card" id="end" style="display:none">
+      <p id="resultfont">結果</p>
+      <p id="score"></p>
+      <button onclick="restart()">もう一回</button>
+      <button onclick="goBack()">戻る</button>
+    </div>
+  </div>
+
+  <div class="fullscreenBar">
+    <button id="fullscreenBtn" type="button" onclick="toggleFullscreen()">全画面表示</button>
+  </div>
+
+  <footer>
+    <div class="footer-inner">
+      <div><img src="./images/rogo.png" height="70vh"></div>
+      <div class="footer-links">
+        <a href="index.html">ホーム</a>
+        <a href="list.html">検索</a>
+        <a href="create.html">作成</a>
+        <a href="favorites.html">お気に入り</a>
+        <a href="settings.html">設定</a>
+        <a href="update.html">更新履歴</a>
+        <a href="contact.html">お問い合わせ</a>
+      </div>
+      <div class="copy">© 2026 TEAM-Minimal, Shiratae</div>
+    </div>
+  </footer>
+
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+  <script>
+    // 他ページと同じFirebase SDK(compatビルド, 9.23.0)で統一する。
+    // 以前このページだけ別バージョンのSDK(modularビルド, 11.8.1)で独自にinitializeAppしていたため、
+    // 他ページ(compat 9.23.0)とは別のFirebase Auth/Firestoreインスタンスが動作しており、
+    // 同じアカウントの認証状態の同期がずれて、長時間このページを開いたままテストしていると
+    // 勝手にログアウト扱いになってしまう不具合の原因になっていた。
+    const firebaseConfig = { apiKey: "AIzaSyD7CJmO3eAO0o2EPRDsVqTtZ_whRd_3-3E", authDomain: "quiz1-4ffdc.firebaseapp.com", projectId: "quiz1-4ffdc", storageBucket: "quiz1-4ffdc.firebasestorage.app", messagingSenderId: "152062126332", appId: "1:152062126332:web:845af237a1a76207214f79" };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    const auth = firebase.auth();
+    let currentUser = null;
+
+    const statusDiv = document.getElementById("status");
+    const loginBtn = document.getElementById("loginBtn");
+    const logoutBtn = document.getElementById("logoutBtn");
+    const settingsBtn = document.getElementById("settingsBtn");
+
+    // ログイン情報のキャッシュを利用してヘッダーを即時表示
+    const savedUser =
+      JSON.parse(localStorage.getItem("cachedUser"));
+
+    if (savedUser) {
+      settingsBtn.style.display = "inline-block";
+      logoutBtn.style.display = "inline-block";
+      loginBtn.style.display = "none";
+    }
+
+    function handleSignedOut() {
+      // cachedUserは明示的なログアウト操作(logout())でのみ削除する
+      // (ここで消すと、次に一時的にnullが発火した際の再確認猶予が効かなくなるため)
+      statusDiv.textContent = "ログアウト中";
+      loginBtn.style.display = "inline-block";
+      logoutBtn.style.display = "none";
+      settingsBtn.style.display = "none";
+    }
+
+    // Firebaseが端末に保存された認証状態を復元し終える前に、onAuthStateChangedが
+    // 一時的にnullで発火することがある。ログイン中のキャッシュ(cachedUser)が
+    // 残っている場合は即座にログアウト扱いにせず、少し待ってから本当に
+    // 未ログインのままかを再確認する（テスト中に実際はログインしたままなのに
+    // 一瞬ログアウト状態の表示になってしまう不具合を防ぐため）。
+    auth.onAuthStateChanged(user => {
+      currentUser = user;
+      if (user) {
+        localStorage.setItem(
+          "cachedUser",
+          JSON.stringify({ uid: user.uid })
+        );
+        statusDiv.textContent = "ログイン中: " + user.uid;
+        loginBtn.style.display = "none";
+        logoutBtn.style.display = "inline-block";
+        settingsBtn.style.display = "inline-block";
+      } else if (localStorage.getItem("cachedUser")) {
+        (function () {
+          // 端末やネットワークが遅いと1回・1.5秒の再確認だけでは間に合わないことがあるため、
+          // 間隔を広げながら最大4回(合計15秒)まで再確認してから本当に未ログインと判断する。
+          const delays = [1000, 2000, 4000, 8000];
+          const recheck = (i) => {
+            setTimeout(() => {
+              if (auth.currentUser) return;
+              if (i + 1 < delays.length) recheck(i + 1);
+              else {
+                handleSignedOut();
+                if (window.VOCABOOST_SHOW_SESSION_LOST_NOTICE) {
+                  window.VOCABOOST_SHOW_SESSION_LOST_NOTICE(!navigator.onLine);
+                }
+              }
+            }, delays[i]);
+          };
+          recheck(0);
+        })();
+      } else {
+        handleSignedOut();
+      }
+    });
+
+    window.goPage = (page) => {
+      if (page === "index.html") {
+        location.href = "index.html";
+        return;
+      }
+      const hasCachedUser = !!localStorage.getItem("cachedUser");
+      if (currentUser || hasCachedUser) {
+        location.href = page;
+      } else {
+        alert("ログインしてください");
+        location.href = "login.html";
+      }
+    };
+
+    window.logout = () => {
+      localStorage.removeItem("cachedUser");
+      auth.signOut();
+    };
+
+    const id = new URLSearchParams(location.search).get("id");
+
+    let words = [],
+        filteredWords = [],
+        i = 0,
+        correct = 0,
+        phase = 0,
+        selfMode = false,
+        swapMode = false;
+
+    // スキップなしのテストで正解した単語（最後まで解き終えたら正解済みの記録と置き換える）
+    let sessionLearned = [],
+        replaceLearnedOnFinish = false;
+
+    let learned = JSON.parse(localStorage.getItem("learnedWords")) || {};
+    if (!learned[id]) learned[id] = [];
+
+    // 並び替え(order)フィールドで取得。未対応の単語帳（orderフィールド未付与）は
+    // 結果が空になるため、その場合は作成日時順にフォールバックする
+    // 読み込みが終わるまでスタートボタンを押せないようにする
+    // （以前は読み込み前に押すと単語が0件扱いになり「すべて正解済みです」と誤表示されていた）
+    (async function loadWords() {
+      const startBtn = document.getElementById("startBtn");
+      try {
+        let snap = await db.collection("wordbooks").doc(id).collection("words").orderBy("order").get();
+        if (snap.empty) {
+          snap = await db.collection("wordbooks").doc(id).collection("words").orderBy("createdAt").get();
+        }
+        snap.forEach(d => words.push(d.data()));
+        if (words.length === 0) {
+          startBtn.textContent = "単語がありません";
+          return;
+        }
+        startBtn.disabled = false;
+        startBtn.textContent = "▶ スタート";
+      } catch (e) {
+        console.error(e);
+        startBtn.textContent = "読み込みに失敗しました";
+      }
+    })();
+
+    window.startTest = () => {
+      selfMode = document.getElementById("selfCheck").checked;
+      swapMode = document.getElementById("swapCheck").checked;
+
+      makeList();
+
+      if (filteredWords.length === 0) {
+        startMsg.textContent = "すべて正解済みです。リセットしてください。";
+        return;
+      }
+
+      i = 0;
+      correct = 0;
+      start.style.display = "none";
+      quiz.style.display = "block";
+      render();
+    };
+
+
+    // 偏りのないシャッフル（Fisher-Yates）。
+    // 以前の sort(() => Math.random() - 0.5) は並びに偏りが出るうえ、
+    // 元の配列を並べ替えてしまうため、ランダムを外して再スタートしても元の順に戻らなかった
+    function shuffled(list) {
+      const a = list.slice();
+      for (let k = a.length - 1; k > 0; k--) {
+        const r = Math.floor(Math.random() * (k + 1));
+        [a[k], a[r]] = [a[r], a[k]];
+      }
+      return a;
+    }
+
+    function escapeTestHtml(str) {
+      return String(str == null ? "" : str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    function makeList() {
+      const skip = document.getElementById("skipCheck").checked;
+      const random = document.getElementById("randomCheck").checked;
+
+      // スキップなしで解くときは、最後まで解き終えた時点で正解済みの記録を
+      // このテストで正解した単語だけに置き換える（途中でやめた場合は前の記録を残す）。
+      // 次にスキップをオンにしたとき、その回に正解した単語だけがスキップされる
+      replaceLearnedOnFinish = !skip;
+      sessionLearned = [];
+
+      if (skip) {
+        filteredWords = words.filter(w => !learned[id].includes(w.front));
+      } else {
+        filteredWords = [...words];
+      }
+
+      // ★ ランダムONのときだけシャッフル
+      if (random) {
+        filteredWords = shuffled(filteredWords);
+      }
+    }
+
+    // swapModeがtrueのとき出題文と正解を入れ替える（表裏を逆にする）
+    function getQuestion(word) {
+      return swapMode ? word.back : word.front;
+    }
+    function getAnswerText(word) {
+      return swapMode ? word.front : word.back;
+    }
+    // ヒントは出題側の単語に、解説は答え側の単語に紐づく。
+    // 「表と裏を入れ替える」がONのときは出題・答えが入れ替わるため、
+    // それに合わせてヒント/解説がどちらの語に付くかも入れ替える。
+    function getQuestionHint(word) {
+      return (swapMode ? word.note : word.hint) || "";
+    }
+    function getAnswerExtra(word) {
+      return (swapMode ? word.hint : word.note) || "";
+    }
+
+    const hintBtn = document.getElementById("hintBtn");
+    const hintText = document.getElementById("hintText");
+    const noteText = document.getElementById("noteText");
+
+    window.showHint = () => {
+      hintText.style.display = "block";
+    };
+
+    function revealNote() {
+      const note = getAnswerExtra(filteredWords[i]);
+      noteText.textContent = note ? `解説: ${note}` : "";
+      noteText.style.display = note ? "block" : "none";
+    }
+
+    function render() {
+      if (i >= filteredWords.length) {
+        if (replaceLearnedOnFinish) {
+          replaceLearnedOnFinish = false;
+          learned[id] = sessionLearned.slice();
+          saveLearned();
+        }
+        quiz.style.display = "none";
+        end.style.display = "block";
+        score.textContent = filteredWords.length
+          ? `${correct}/${filteredWords.length} (${Math.round(correct / filteredWords.length * 100)}%)`
+          : "出題できる単語がありません";
+        return;
+      }
+      q.textContent = getQuestion(filteredWords[i]);
+      ans.value = "";
+      ans.readOnly = false;
+      result.textContent = "";
+      phase = 0;
+
+      // ヒントは普段は非表示にしておき、「ヒントを表示」ボタンを押したときだけ見せる
+      const hint = getQuestionHint(filteredWords[i]);
+      hintBtn.style.display = hint ? "inline-block" : "none";
+      hintText.textContent = hint ? `ヒント: ${hint}` : "";
+      hintText.style.display = "none";
+
+      // 解説は回答するまでは表示しない（正解と一緒に出す）
+      noteText.textContent = "";
+      noteText.style.display = "none";
+
+      ans.style.display = "";
+      const answerBtn = document.getElementById("answerBtn");
+      answerBtn.style.display = "";
+      answerBtn.textContent = "回答 (Enter)";
+      document.getElementById("selfButtons").style.display = "none";
+      if (filteredWords.length > 0) {
+        const progress = Math.round(i / filteredWords.length * 100);
+        document.getElementById("progressBar").style.width = progress + "%";
+      }
+      const progress = Math.round(i / filteredWords.length * 100);
+      document.getElementById("progressBar").style.width = progress + "%";
+      document.getElementById("progressText").textContent =
+        `${i+1}/${filteredWords.length} 問`;
+
+      fitQuestionText();
+    }
+
+    // 長い問題文は文字を小さくして、カードに収まるようにする
+    // （横にはみ出さず、縦も一定の高さに収まるまで小さくする）
+    function fitQuestionText() {
+      if (quiz.style.display !== "block") return;
+      q.style.fontSize = "";
+      const base = parseFloat(getComputedStyle(q).fontSize);
+      // 問題文に使える高さ：通常は約4行分、全画面では画面の高さの35%まで
+      const maxHeight = document.body.classList.contains("fullscreen-mode")
+        ? Math.max(base * 1.4 * 3, window.innerHeight * 0.35)
+        : Math.max(160, base * 1.4 * 4);
+      let scale = 1;
+      while ((q.scrollWidth > q.clientWidth + 1 || q.offsetHeight > maxHeight + 1) && scale > 0.35) {
+        scale *= 0.9;
+        q.style.fontSize = (base * scale) + "px";
+      }
+    }
+
+    // 画面の大きさが変わったとき（全画面の切り替えを含む）も調整し直す
+    window.addEventListener("resize", fitQuestionText);
+
+    // 正解した単語を「正解済み」として記録する。
+    // 端末の保存容量(localStorage)がいっぱいだと保存で例外が発生し、以前はその時点で
+    // 処理が止まってボタンが「回答」のまま残り、Enterをもう一度押す必要があった
+    // (2回目で正解数も二重に数えられていた)。保存に失敗してもテストは続けられるようにする。
+    function markLearned(word) {
+      if (!sessionLearned.includes(word.front)) sessionLearned.push(word.front);
+      if (learned[id].includes(word.front)) return;
+      learned[id].push(word.front);
+      saveLearned();
+    }
+
+    function saveLearned() {
+      try {
+        localStorage.setItem("learnedWords", JSON.stringify(learned));
+      } catch (e) {
+        console.warn("正解済みの記録を保存できませんでした（端末の保存容量不足の可能性）", e);
+      }
+    }
+
+    window.check = () => {
+        if (phase === 0) {
+
+            if (selfMode) {
+
+                // 完全一致なら自動で正解
+                if (ans.value.trim() === getAnswerText(filteredWords[i])) {
+
+                    result.innerHTML = '<span class="correct">正解</span>';
+
+                    correct++;
+                    markLearned(filteredWords[i]);
+
+                    revealNote();
+                    phase = 1;
+                    document.getElementById("answerBtn").textContent = "次へ (Enter)";
+                    return;
+                }
+
+                // 完全一致しなかったら自分で採点
+                ans.readOnly = true;
+
+                // #resultは改行をそのまま表示する(white-space: pre-wrap)ため、HTMLの改行や字下げが
+                // 空行として表示されて枠が縦に大きく広がっていた。改行を入れずに組み立てる
+                result.innerHTML =
+                  '<div class="selfCheckBox">' +
+                    '<div><b>あなたの回答</b></div>' +
+                    '<div style="margin-bottom:12px;">' + (ans.value ? escapeTestHtml(ans.value) : "（未入力）") + '</div>' +
+                    '<div><b>正解</b></div>' +
+                    '<div>' + escapeTestHtml(getAnswerText(filteredWords[i])) + '</div>' +
+                  '</div>';
+
+                document.getElementById("answerBtn").style.display = "none";
+                document.getElementById("selfButtons").style.display = "block";
+
+                revealNote();
+                phase = 2;
+                return;
+            }
+
+            // ここから今までの自動採点
+        if (ans.value.trim() === getAnswerText(filteredWords[i])) {
+          result.innerHTML = '<span class="correct">正解</span>';
+          correct++;
+          markLearned(filteredWords[i]);
+        } else {
+          result.innerHTML = '<span class="wrong">不正解</span>　正解: ' + escapeTestHtml(getAnswerText(filteredWords[i]));
+        }
+        revealNote();
+        phase = 1;
+        document.getElementById("answerBtn").textContent = "次へ (Enter)";
+      } else {
+        i++;
+        render();
+      }
+    };
+
+    window.markCorrect = () => {
+
+        correct++;
+        markLearned(filteredWords[i]);
+
+        result.innerHTML += '<br><br><span class="correct">正解</span>';
+        document.getElementById("selfButtons").style.display = "none";
+        const answerBtn = document.getElementById("answerBtn");
+        answerBtn.style.display = "";
+        answerBtn.textContent = "次へ (Enter)";
+        phase = 1;
+    };
+
+    window.markWrong = () => {
+
+        result.innerHTML += '<br><br><span class="wrong">不正解</span>';
+        document.getElementById("selfButtons").style.display = "none";
+        const answerBtn = document.getElementById("answerBtn");
+        answerBtn.style.display = "";
+        answerBtn.textContent = "次へ (Enter)";
+        phase = 1;
+    };
+    
+    // 「もう一回」ではすぐに始めず、設定画面（メニュー）に戻って設定を選び直せるようにする
+    window.restart = () => {
+      end.style.display = "none";
+      startMsg.textContent = "";
+      start.style.display = "block";
+    };
+
+    window.resetLearned = () => {
+      if (!confirm("学習データを削除しますか？")) return;
+      learned[id] = [];
+      try {
+        localStorage.setItem("learnedWords", JSON.stringify(learned));
+      } catch (e) {
+        console.warn("学習データの保存に失敗しました", e);
+      }
+      startMsg.textContent = "リセットしました。";
+    };
+
+    document.addEventListener("keydown", e => {
+        if (e.key !== "Enter") return;
+        if (quiz.style.display !== "block") return;
+
+        // Enterキーはここで処理するが、その時点で「ヒントを表示」ボタンなどに
+        // フォーカスが残っていると、ブラウザ標準の「Enterでフォーカス中のボタンを
+        // クリックする」動作が別途発火し、同じEnter一回でその関数が余分に
+        // 呼ばれてしまう(次の問題でもヒントが自動で表示され続けるなどの原因になる)。
+        // それを防ぐため、Enterのデフォルト動作は抑止して自前の処理だけを行う。
+        e.preventDefault();
+
+        // 自分で採点するとき: Ctrl+Enterで「正解」、Ctrl+Shift+Enterで「不正解」（MacはCmdでも可）
+        if (phase === 2) {
+          if (e.ctrlKey || e.metaKey) {
+            if (e.shiftKey) markWrong(); else markCorrect();
+          }
+          return;
+        }
+
+        check();
+    });
+
+    window.goBack = () => {
+      location.href = `view.html?id=${id}`;
+    };
+  </script>
+  <script src="account-widgets.js?v=20260930"></script>
+  <script src="analytics-tracker.js"></script>
+  <script>
+    // 全画面表示：ヘッダーやフッターを隠してカードだけを表示する。
+    // ブラウザの全画面(Fullscreen API)が使える端末ではそれも使う
+    // （iPhoneのSafariなど使えない端末でも、ヘッダー・フッターは隠れる）
+    (function () {
+      const btn = document.getElementById("fullscreenBtn");
+
+      function setFullscreenMode(on) {
+        document.body.classList.toggle("fullscreen-mode", on);
+        btn.textContent = on ? "全画面を終了" : "全画面表示";
+      }
+
+      function browserFullscreenElement() {
+        return document.fullscreenElement || document.webkitFullscreenElement || null;
+      }
+
+      window.toggleFullscreen = () => {
+        const on = !document.body.classList.contains("fullscreen-mode");
+        setFullscreenMode(on);
+        const el = document.documentElement;
+        try {
+          if (on) {
+            if (el.requestFullscreen) el.requestFullscreen().catch(() => {});
+            else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
+          } else if (browserFullscreenElement()) {
+            if (document.exitFullscreen) document.exitFullscreen().catch(() => {});
+            else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+          }
+        } catch (e) {
+          // 全画面にできなくても、ヘッダー・フッターを隠す表示は続ける
+        }
+        // フォーカスが残ると、次のEnterでこのボタンが押されてしまうため外す
+        btn.blur();
+        // iPhoneなど画面サイズが変わらない端末でも、文字の大きさを調整し直す
+        window.dispatchEvent(new Event("resize"));
+      };
+
+      // Escキーなどでブラウザの全画面が解除されたら、表示も元に戻す
+      function onFullscreenChange() {
+        if (!browserFullscreenElement()) {
+          setFullscreenMode(false);
+          window.dispatchEvent(new Event("resize"));
+        }
+      }
+      document.addEventListener("fullscreenchange", onFullscreenChange);
+      document.addEventListener("webkitfullscreenchange", onFullscreenChange);
+    })();
+  </script>
+</body>
+
+</html>
